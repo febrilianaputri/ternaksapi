@@ -105,9 +105,9 @@ export function AuthLayout({ children }: AuthLayoutProps) {
               </button>
               <div className="flex items-center gap-3 group">
                 <div className="w-11 h-11 rounded-full bg-brand-accent flex items-center justify-center shadow-lg shadow-brand-forest/20 group-hover:bg-brand-accent/90 transition-colors">
-                  <FaLeaf className="w-6 h-6 text-brand-forest" />
+                  <TCowLogo className="w-6 h-6" />
                 </div>
-                <span className="text-xl font-semibold tracking-tight">Adyatma Farm</span>
+                <span className="text-xl font-semibold tracking-tight">T-Cow°</span>
               </div>
             </div>
             <div className="relative space-y-8 max-w-lg">
@@ -127,7 +127,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
                 </div>
               </dl>
             </div>
-            <div className="relative text-brand-cream/55 text-xs">© AdyatmaKom - Website kolaborasi TEKOM dan TNK</div>
+            <div className="relative text-brand-cream/55 text-xs">© T-Cow° - Website kolaborasi TEKOM dan TNK</div>
           </div>
           <div className="flex-1 h-full flex items-center justify-center p-10 bg-brand-cream/50 dark:bg-[#12180e]">
             <div className="w-full max-w-[420px]">

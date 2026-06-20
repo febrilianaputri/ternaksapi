@@ -465,7 +465,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="flex items-end justify-between mb-10">
             <div>
-              <span className="text-brand-cream/70 text-sm font-medium uppercase tracking-widest">Vis</span>
+              <span className="text-brand-cream/70 text-sm font-medium uppercase tracking-widest">Visual</span>
               <h2 className="mt-2 text-4xl font-bold text-stone-900 dark:text-stone-100">Farm Gallery</h2>
             </div>
             <Link href="/about" className="text-sm text-stone-400 hover:text-brand-sage dark:hover:text-brand-accent flex items-center gap-1 transition-colors">
