@@ -24,6 +24,9 @@ const statusIcons: Record<string, React.ElementType> = {
   Selesai: FaCheckCircle,
 };
 
+// Tanggal hari ini untuk membatasi input date
+const today = new Date().toISOString().split("T")[0];
+
 type MaintenanceItem = {
   id: string;
   sensorId: string;
@@ -317,6 +320,7 @@ export default function MaintenancePage() {
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 className="w-full px-3 py-2 border border-stone-300 dark:border-stone-600 rounded-lg bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                max={today}
               />
             </div>
             <div>

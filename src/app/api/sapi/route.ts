@@ -1,9 +1,17 @@
 import { NextResponse } from "next/server";
-import { buildSapiBundle, createCattle } from "@/lib/sapi-service";
+import { buildSapiBundle, buildFullExportData, createCattle } from "@/lib/sapi-service";
 import type { CattleInput } from "@/lib/sapi";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const exportAll = searchParams.get("export");
+
+    if (exportAll === "full") {
+      const data = await buildFullExportData();
+      return NextResponse.json(data);
+    }
+
     const data = await buildSapiBundle();
     return NextResponse.json(data);
   } catch (error) {

@@ -13,26 +13,33 @@ export async function GET() {
   try {
     const sapiList = await prisma.sapi.findMany({
       orderBy: { idsapi: "asc" },
-      select: { idsapi: true, nama_sapi: true, jenis_kelamin: true },
+      select: { idsapi: true, nama_sapi: true, jenis_kelamin: true, kandang: true, nomor_eartag: true, status_hidup: true },
     });
     const cattleNames = new Map(
       sapiList.map((s) => [s.idsapi, s.nama_sapi])
+    );
+    const cattleKandang = new Map(
+      sapiList.map((s) => [s.idsapi, s.kandang])
+    );
+    const cattleEartag = new Map(
+      sapiList.map((s) => [s.idsapi, s.nomor_eartag ?? `EARTAG-${s.idsapi}`])
+    );
+    const cattleHealth = new Map(
+      sapiList.map((s) => [s.idsapi, s.status_hidup])
     );
 
     const { data: raw, error: fetchError } = await fetchDataSensorFromRtdbDetailed();
     const { sensors: parsedSensors, tempHistory } = normalizeDataSensor(
       raw,
-      cattleNames
+      cattleNames,
+      cattleKandang,
+      cattleEartag
     );
 
-    const pendingMessage = fetchError ?? "Menunggu data Firebase";
-    const { sensors, matchedCount } = mergeSensorsWithCattle(
-      parsedSensors,
-      sapiList,
-      { pendingMessage }
-    );
-
-    const rtdbEmpty = matchedCount === 0;
+    const rtdbEmpty = parsedSensors.length === 0;
+    const sensors = rtdbEmpty && sapiList.length > 0
+      ? buildFallbackSensors(sapiList, cattleEartag)
+      : parsedSensors;
 
     if (!rtdbEmpty) {
       sensors.forEach((sapi) => {

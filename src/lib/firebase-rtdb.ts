@@ -1,8 +1,9 @@
-// src/lib/firebase-rtdb.ts
 
-// ==========================================
-// 1. Fungsi Pembantu Utilitas & Identifikasi
-// ==========================================
+export function formatKandangLabel(kandang: string): string {
+  if (kandang === "KoloniBesar") return "Koloni Besar";
+  if (kandang === "KandangDara") return "Kandang Dara";
+  return kandang;
+}
 
 export function sensorKeyToIdsapi(key: string): number | null {
   const trimmed = key.trim();
@@ -462,7 +463,9 @@ function snapshotToSensorReading(
 
 export function normalizeDataSensor(
   raw: unknown,
-  cattleNames: Map<number, string>
+  cattleNames: Map<number, string>,
+  cattleKandang?: Map<number, string>,
+  cattleEartag?: Map<number, string>
 ): { sensors: SensorReading[]; tempHistory: TempHistoryPoint[] } {
   const monitoring = extractMonitoringNode(raw);
   if (!monitoring) {
@@ -479,7 +482,23 @@ export function normalizeDataSensor(
     const idSapiAngka = sensorKeyToIdsapi(eartagKey) ?? 0;
     const cowKey = idsapiToSensorKey(idSapiAngka);
 
-    sensors.push(snapshotToSensorReading(eartagKey, snapshots, cattleNames));
+    const dbKandang = cattleKandang?.get(idSapiAngka);
+    const rtdbLokasi = pickString(timestampsNode, ["lokasi", "location", "posisi"]);
+    const location = rtdbLokasi || (dbKandang ? formatKandangLabel(dbKandang) : `Kandang ${cowKey}`);
+    const eartag = cattleEartag?.get(idSapiAngka) || pickString(timestampsNode, ["id", "sensorId"]) || `EARTAG-${idSapiAngka}`;
+
+    sensors.push({
+      id: eartag,
+      cattleId: cowKey,
+      cattleName: namaSapi,
+      battery: latest.battery !== null ? Math.max(0, Math.min(100, Math.round(latest.battery))) : 0,
+      temperature: parseFloat(latest.temperature.toFixed(2)),
+      location,
+      kandangKategori: "IoT",
+      status: deriveStatus(latest.battery, latest.temperature, staleMinutes),
+      lastUpdate: formatLastUpdate(latest.timestamp),
+      timestamp: latest.timestamp ?? undefined,
+    });
 
     for (const snapshot of snapshots) {
       const graphLabel = graphLabelFromSnapshot(snapshot);
@@ -544,36 +563,22 @@ export function buildFallbackSensor(
 }
 
 export function buildFallbackSensors(
-  sapiList: { idsapi: number; nama_sapi: string; jenis_kelamin: string }[]
+  sapiList: { idsapi: number; nama_sapi: string; jenis_kelamin: string; kandang: string; nomor_eartag: string | null }[],
+  cattleEartag?: Map<number, string>
 ): SensorReading[] {
-  return sapiList.map((s) => buildFallbackSensor(s));
-}
-
-export function mergeSensorsWithCattle(
-  parsedSensors: SensorReading[],
-  sapiList: { idsapi: number; nama_sapi: string; jenis_kelamin: string }[],
-  options?: { pendingMessage?: string }
-): { sensors: SensorReading[]; matchedCount: number } {
-  const pendingMessage = options?.pendingMessage ?? "Menunggu data Firebase";
-  const byIdsapi = new Map<number, SensorReading>();
-
-  for (const sensor of parsedSensors) {
-    const idsapi = sensorKeyToIdsapi(sensor.cattleId);
-    if (idsapi !== null) {
-      byIdsapi.set(idsapi, sensor);
-    }
-  }
-
-  const sensors = sapiList.map((s) => {
-    const fromFirebase = byIdsapi.get(s.idsapi);
-    if (!fromFirebase) {
-      return buildFallbackSensor(s, pendingMessage);
-    }
-
+  return sapiList.map((s) => {
+    const cattleId = idsapiToSensorKey(s.idsapi);
+    const eartag = cattleEartag?.get(s.idsapi) || s.nomor_eartag || `EARTAG-${s.idsapi}`;
     return {
-      ...fromFirebase,
+      id: eartag,
+      cattleId,
       cattleName: s.nama_sapi,
-      kandangKategori: s.jenis_kelamin === "Betina" ? "Individu" : "Koloni",
+      battery: 0,
+      temperature: 0,
+      location: formatKandangLabel(s.kandang),
+      kandangKategori: "IoT",
+      status: "Error" as const,
+      lastUpdate: "Menunggu data Firebase",
     };
   });
 

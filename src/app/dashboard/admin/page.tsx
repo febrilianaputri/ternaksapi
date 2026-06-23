@@ -17,6 +17,9 @@ const statusStyle: Record<string, string> = {
   Nonaktif: "bg-stone-100 dark:bg-stone-700 text-stone-500 dark:text-stone-400",
 };
 
+// Tanggal hari ini untuk membatasi input date
+const today = new Date().toISOString().split("T")[0];
+
 type AdminUser = {
   id: string;
   name: string;
@@ -349,6 +352,7 @@ export default function AdminPage() {
               value={formData.joinDate}
               onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })}
               className="w-full px-3 py-2 border border-stone-300 dark:border-stone-600 rounded-lg bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              max={today}
             />
           </div>
           <div className="flex gap-3 pt-4">
