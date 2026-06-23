@@ -11,6 +11,7 @@ type SensorsPayload = {
   cowNames: Record<string, string>;
   updatedAt: string;
   source?: string;
+  fetchError?: string | null;
 };
 
 const empty: SensorsPayload = {

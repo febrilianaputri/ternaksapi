@@ -122,6 +122,7 @@ export default function SensorMonitoring() {
     refresh,
     updatedAt,
     source,
+    fetchError,
   } = useSensors(30000);
   const [refreshing, setRefreshing] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
@@ -168,7 +169,7 @@ export default function SensorMonitoring() {
     return (
       <div className="p-6 text-center text-stone-500">
         <p>{error}</p>
-        <p className="text-xs mt-2">Pastikan node dataSensor di Realtime Database tersedia.</p>
+        <p className="text-xs mt-2">Pastikan node <code>monitoring</code> di Realtime Database tersedia dan aturan Firebase mengizinkan pembacaan.</p>
       </div>
     );
   }
@@ -189,7 +190,8 @@ export default function SensorMonitoring() {
 
       {source === "mysql-fallback" && (
         <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
-          Data sensor Firebase belum tersedia, hubungi atau lapor ke teknisi.
+          {fetchError ??
+            "Data sensor Firebase belum tersedia, hubungi atau lapor ke teknisi."}
         </div>
       )}
 
@@ -240,8 +242,8 @@ export default function SensorMonitoring() {
           <div className="grid grid-rows-2 grid-cols-4 gap-4 min-w-max">
           {sensors.map((sensor) => {
             const cowKey = sensor.cattleId;
-            const st = sensor.status === "Error" ? null : tempStatus(sensor.temperature);
-            const isOffline = sensor.status === "Error";
+            const st = sensor.offline ? null : tempStatus(sensor.temperature);
+            const isOffline = Boolean(sensor.offline);
             return (
               <div key={sensor.id}
                 className={`bg-white dark:bg-stone-900 rounded-2xl border p-5 space-y-4 transition-all hover:shadow-md ${

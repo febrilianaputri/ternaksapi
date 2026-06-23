@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { deleteCattle, findCattleByParam, updateCattle } from "@/lib/sapi-service";
-import { fetchDataSensorFromRtdb } from "@/lib/firebase-rtdb";
+import { buildCattleSensorData, fetchDataSensorFromRtdb } from "@/lib/firebase-rtdb";
 import type { CattleInput } from "@/lib/sapi";
 
 type RouteParams = { params: Promise<{ id: string }> };
@@ -18,7 +18,8 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     // Fetch sensor data from Firebase
     let sensorData = null;
     try {
-      sensorData = await fetchDataSensorFromRtdb();
+      const raw = await fetchDataSensorFromRtdb();
+      sensorData = raw ? buildCattleSensorData(raw, cattle.idsapi) : null;
     } catch (error) {
       console.error("Error fetching sensor data:", error);
       // Continue without sensor data

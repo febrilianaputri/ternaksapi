@@ -2,12 +2,12 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import {
-  buildFallbackSensors,
-  fetchDataSensorFromRtdb,
+  fetchDataSensorFromRtdbDetailed,
+  mergeSensorsWithCattle,
   normalizeDataSensor,
 } from "@/lib/firebase-rtdb";
 import type { DashboardAlert } from "@/lib/dashboard";
-import { sendTelegramNotification } from "@/lib/telegram"; // <-- Import fungsi utility Telegram
+import { sendTelegramNotification } from "@/lib/telegram";
 
 export async function GET() {
   try {
@@ -19,58 +19,75 @@ export async function GET() {
       sapiList.map((s) => [s.idsapi, s.nama_sapi])
     );
 
-    const raw = await fetchDataSensorFromRtdb();
+    const { data: raw, error: fetchError } = await fetchDataSensorFromRtdbDetailed();
     const { sensors: parsedSensors, tempHistory } = normalizeDataSensor(
       raw,
       cattleNames
     );
 
-    const rtdbEmpty = parsedSensors.length === 0;
-    const sensors = rtdbEmpty && sapiList.length > 0
-      ? buildFallbackSensors(sapiList)
-      : parsedSensors;
+    const pendingMessage = fetchError ?? "Menunggu data Firebase";
+    const { sensors, matchedCount } = mergeSensorsWithCattle(
+      parsedSensors,
+      sapiList,
+      { pendingMessage }
+    );
 
-    // ========================================================
-    // LOGIKA GENERATOR NOTIFIKASI TELEGRAM (T-COW°)
-    // ========================================================
+    const rtdbEmpty = matchedCount === 0;
+
     if (!rtdbEmpty) {
       sensors.forEach((sapi) => {
+        if (sapi.offline) return;
+
         const batasSuhuDemam = 39.5;
+        const batasSuhuKritisRendah = 36.0;
         const batasBateraiLemah = 25;
 
-        // 1. Kondisi Peringatan Suhu Demam
         if (sapi.temperature > batasSuhuDemam) {
-          const pesanSuhu = 
+          const pesanSuhuTinggi =
             `⚠️ *PERINGATAN T-COW°: SAPI DEMAM* ⚠️\n\n` +
             `🐮 *Nama Sapi:* ${sapi.cattleName}\n` +
             `🆔 *ID Eartag:* ${sapi.cattleId}\n` +
             `===== DATA KONDISI =====\n` +
-            `Building 🌡️ *Suhu Tubuh:* ${sapi.temperature}°C (⚠️ Demam Tinggi)\n` +
+            `🌡️ *Suhu Tubuh:* ${sapi.temperature}°C (⚠️ Demam Tinggi)\n` +
             `🔋 *Baterai Eartag:* ${sapi.battery}%\n` +
             `📍 *Lokasi:* ${sapi.location}\n` +
             `🕒 *Waktu Data:* ${sapi.lastUpdate}\n\n` +
-            `_Mohon petugas lapangan segera mengecek kondisi sapi di kandang._`;
+            `_Mohon petugas lapangan segera mengecek kondisi kesehatan sapi._`;
 
-          sendTelegramNotification(pesanSuhu);
-        }
-
-        // 2. Kondisi Peringatan Baterai Lemah (<= 25%)
-        if (sapi.battery > 0 && sapi.battery <= batasBateraiLemah) {
-          const pesanBaterai = 
-            `🔋 *PERINGATAN T-COW°: BATERAI LEMAH* ⚠️\n\n` +
+          sendTelegramNotification(pesanSuhuTinggi);
+        } else if (
+          sapi.temperature > 0 &&
+          sapi.temperature < batasSuhuKritisRendah
+        ) {
+          const pesanSuhuRendah =
+            `⚠️ *PERINGATAN T-COW°: SUHU KRITIS/ABNORMAL* ⚠️\n\n` +
             `🐮 *Nama Sapi:* ${sapi.cattleName}\n` +
             `🆔 *ID Eartag:* ${sapi.cattleId}\n` +
             `===== DATA KONDISI =====\n` +
-            `🔋 *Sisa Baterai:* ${sapi.battery}% (⚠️ Segera Ganti/Cas)\n` +
-            `   🌡️ *Suhu Terakhir:* ${sapi.temperature}°C\n` +
+            `🌡️ *Suhu Tubuh:* ${sapi.temperature}°C (⚠️ Terlalu Rendah)\n` +
+            `🔋 *Baterai Eartag:* ${sapi.battery}%\n` +
+            `📍 *Lokasi:* ${sapi.location}\n` +
             `🕒 *Waktu Data:* ${sapi.lastUpdate}\n\n` +
-            `_Mohon tim teknis segera mengecas baterai eartag._`;
+            `_Deteksi suhu drop di bawah normal. Harap periksa apakah alat T-Cow° terlepas dari telinga sapi._`;
+
+          sendTelegramNotification(pesanSuhuRendah);
+        }
+
+        if (sapi.battery <= batasBateraiLemah) {
+          const pesanBaterai =
+            `🔋 *PERINGATAN T-COW°: KONDISI BATERAI* ⚠️\n\n` +
+            `🐮 *Nama Sapi:* ${sapi.cattleName}\n` +
+            `🆔 *ID Eartag:* ${sapi.cattleId}\n` +
+            `===== DATA KONDISI =====\n` +
+            `🔋 *Sisa Baterai:* ${sapi.battery}% (${sapi.battery === 0 ? "⚠️ ALAT OFF / BATTERY CRITICAL" : "⚠️ Segera Cas"})\n` +
+            `🌡️ *Suhu Terakhir:* ${sapi.temperature}°C\n` +
+            `🕒 *Waktu Data:* ${sapi.lastUpdate}\n\n` +
+            `_Mohon tim teknis segera melakukan maintenance/penggantian baterai eartag._`;
 
           sendTelegramNotification(pesanBaterai);
         }
       });
     }
-    // ========================================================
 
     const alerts: DashboardAlert[] = sensors
       .filter((s) => s.status !== "Aktif")
@@ -81,8 +98,8 @@ export async function GET() {
             ? ("danger" as const)
             : ("warning" as const),
         title: `Sensor ${s.cattleName}`,
-        message: rtdbEmpty
-          ? "Menunggu data dari Firebase Realtime Database"
+        message: s.offline
+          ? fetchError ?? "Menunggu data dari Firebase Realtime Database"
           : `${s.status} · Suhu ${s.temperature}°C · Baterai ${s.battery}%`,
         time: s.lastUpdate,
         read: false,
@@ -100,6 +117,8 @@ export async function GET() {
       ),
       updatedAt: new Date().toISOString(),
       source: rtdbEmpty ? "mysql-fallback" : "firebase",
+      matchedCount,
+      fetchError,
     });
   } catch (error) {
     console.error("[GET /api/sensors]", error);
