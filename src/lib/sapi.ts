@@ -3,6 +3,7 @@ export type CattleListItem = {
   idsapi: number;
   name: string;
   breed: string;
+  gender: string;
   age: number;
   weight: number;
   status: string;
@@ -10,8 +11,21 @@ export type CattleListItem = {
   stall: string;
   kandangKategori: string;
   birthDate: string;
+  eartag: string | null;
   milkAvg: number;
   lastCheck: string;
+};
+
+export type CattleInput = {
+  name: string;
+  breed: string;
+  gender?: "Jantan" | "Betina";
+  kandang?: "Individu" | "KandangDara" | "KoloniBesar";
+  birthDate?: string;
+  health?: "Sehat" | "Sakit" | "Mati";
+  weight?: number;
+  lastCheck?: string;
+  eartag?: string;
 };
 
 export type MedicalRecord = {
@@ -22,6 +36,15 @@ export type MedicalRecord = {
   description: string;
   vet: string;
   status: string;
+  jenisTindakan: string;
+  catatan: string;
+};
+
+export type MedicalRecordInput = {
+  jenisTindakan: "Obat_Cacing" | "Vaksin_PMK" | "Vaksin_LSD";
+  date: string;
+  catatan?: string;
+  vet?: string;
 };
 
 export type VaccinationRecord = {
@@ -43,6 +66,20 @@ export type CattleActivity = {
   detail: string;
   petugas: string;
   kategori: string;
+  source: "medis" | "fisik" | "maintenance";
+  sourceId: number;
+  jenisTindakan?: string;
+  beratBadan?: number;
+};
+
+export type ActivityInput = {
+  kategori: "pemeriksaan" | "pencatatan_bobot" | "perawatan" | "vaksinasi";
+  date: string;
+  type?: string;
+  detail?: string;
+  petugas?: string;
+  beratBadan?: number;
+  jenisTindakan?: "Obat_Cacing" | "Vaksin_PMK" | "Vaksin_LSD";
 };
 
 export type SapiBundle = {

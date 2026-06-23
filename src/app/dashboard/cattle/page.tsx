@@ -2,75 +2,76 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { FaSpinner, FaExclamationTriangle, FaPlus, FaDownload } from "react-icons/fa";
+import {
+  FaSpinner,
+  FaExclamationTriangle,
+  FaPlus,
+  FaDownload,
+  FaTrash,
+} from "react-icons/fa";
 import { toast } from "sonner";
 import Modal from "@/components/ui/Modal";
-import type { CattleListItem } from "@/lib/sapi";
+import type { CattleInput, CattleListItem } from "@/lib/sapi";
 
-type EditForm = {
+type CattleForm = {
   name: string;
   breed: string;
+  gender: string;
+  kandang: string;
+  birthDate: string;
   health: string;
-  status: string;
   weight: string;
   lastCheck: string;
+  eartag: string;
 };
+
+const emptyForm = (): CattleForm => ({
+  name: "",
+  breed: "",
+  gender: "Betina",
+  kandang: "KoloniBesar",
+  birthDate: new Date().toISOString().split("T")[0],
+  health: "Sehat",
+  weight: "",
+  lastCheck: new Date().toISOString().split("T")[0],
+  eartag: "",
+});
+
+const inputClassName =
+  "mt-2 w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-stone-900 outline-none transition focus:border-[#54cd19] focus:ring-2 focus:ring-[#54cd19]/20 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100";
+
+const selectClassName = inputClassName;
+
+function formToPayload(form: CattleForm): CattleInput {
+  const weight = Number(form.weight);
+  return {
+    name: form.name.trim(),
+    breed: form.breed.trim(),
+    gender: form.gender as CattleInput["gender"],
+    kandang: form.kandang as CattleInput["kandang"],
+    birthDate: form.birthDate,
+    health: form.health as CattleInput["health"],
+    lastCheck: form.lastCheck,
+    eartag: form.eartag.trim() || undefined,
+    ...(Number.isFinite(weight) && weight > 0 ? { weight } : {}),
+  };
+}
 
 export default function CattleListPage() {
   const [cattle, setCattle] = useState<CattleListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [modalMode, setModalMode] = useState<"create" | "edit" | null>(null);
   const [editingCattle, setEditingCattle] = useState<CattleListItem | null>(null);
-  const [editForm, setEditForm] = useState<EditForm>({
-    name: "",
-    breed: "",
-    health: "",
-    status: "",
-    weight: "",
-    lastCheck: "",
-  });
+  const [deletingCattle, setDeletingCattle] = useState<CattleListItem | null>(null);
+  const [form, setForm] = useState<CattleForm>(emptyForm);
 
-  const openEditModal = (item: CattleListItem) => {
-    setEditingCattle(item);
-    setEditForm({
-      name: item.name,
-      breed: item.breed,
-      health: item.health,
-      status: item.status,
-      weight: String(item.weight),
-      lastCheck: item.lastCheck,
-    });
-  };
-
-  const closeEditModal = () => {
-    setEditingCattle(null);
-  };
-
-  const handleEditChange = (key: keyof EditForm, value: string) => {
-    setEditForm((current) => ({ ...current, [key]: value }));
-  };
-
-  const handleSaveEdit = () => {
-    if (!editingCattle) return;
-
-    setCattle((prev) =>
-      prev.map((item) =>
-        item.id === editingCattle.id
-          ? {
-              ...item,
-              name: editForm.name,
-              breed: editForm.breed,
-              health: editForm.health,
-              status: editForm.status,
-              weight: Number(editForm.weight),
-              lastCheck: editForm.lastCheck,
-            }
-          : item
-      )
-    );
-
-    toast.success("Data sapi berhasil diperbarui");
-    closeEditModal();
+  const fetchCattle = async () => {
+    const res = await fetch("/api/sapi");
+    if (!res.ok) throw new Error("Gagal memuat data sapi");
+    const json = (await res.json()) as { cattle: CattleListItem[] };
+    setCattle(json.cattle);
   };
 
   useEffect(() => {
@@ -78,10 +79,7 @@ export default function CattleListPage() {
 
     (async () => {
       try {
-        const res = await fetch("/api/sapi");
-        if (!res.ok) throw new Error("Gagal memuat data sapi");
-        const json = (await res.json()) as { cattle: CattleListItem[] };
-        if (!cancelled) setCattle(json.cattle);
+        await fetchCattle();
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : "Terjadi kesalahan");
@@ -96,6 +94,100 @@ export default function CattleListPage() {
     };
   }, []);
 
+  const handleFormChange = (key: keyof CattleForm, value: string) => {
+    setForm((current) => ({ ...current, [key]: value }));
+  };
+
+  const openCreateModal = () => {
+    setModalMode("create");
+    setEditingCattle(null);
+    setForm(emptyForm());
+  };
+
+  const openEditModal = (item: CattleListItem) => {
+    setModalMode("edit");
+    setEditingCattle(item);
+    setForm({
+      name: item.name,
+      breed: item.breed,
+      gender: item.gender,
+      kandang: item.status,
+      birthDate: item.birthDate,
+      health: item.health,
+      weight: String(item.weight || ""),
+      lastCheck: item.lastCheck,
+      eartag: item.eartag ?? "",
+    });
+  };
+
+  const closeFormModal = () => {
+    setModalMode(null);
+    setEditingCattle(null);
+  };
+
+  const handleSave = async () => {
+    if (!form.name.trim() || !form.breed.trim()) {
+      toast.error("Nama dan jenis sapi wajib diisi");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const payload = formToPayload(form);
+
+      if (modalMode === "create") {
+        const res = await fetch("/api/sapi", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const json = (await res.json()) as { cattle?: CattleListItem; error?: string };
+        if (!res.ok) throw new Error(json.error ?? "Gagal menambahkan sapi");
+        setCattle((prev) => [...prev, json.cattle!].sort((a, b) => a.idsapi - b.idsapi));
+        toast.success("Sapi berhasil ditambahkan");
+      } else if (modalMode === "edit" && editingCattle) {
+        const res = await fetch(`/api/sapi/${encodeURIComponent(editingCattle.id)}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const json = (await res.json()) as { cattle?: CattleListItem; error?: string };
+        if (!res.ok) throw new Error(json.error ?? "Gagal memperbarui sapi");
+        setCattle((prev) =>
+          prev.map((item) => (item.id === editingCattle.id ? json.cattle! : item))
+        );
+        toast.success("Data sapi berhasil diperbarui");
+      }
+
+      closeFormModal();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Terjadi kesalahan");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deletingCattle) return;
+
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/sapi/${encodeURIComponent(deletingCattle.id)}`, {
+        method: "DELETE",
+      });
+      const json = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Gagal menghapus sapi");
+
+      setCattle((prev) => prev.filter((item) => item.id !== deletingCattle.id));
+      toast.success("Sapi berhasil dihapus");
+      setDeletingCattle(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Terjadi kesalahan");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleExport = () => {
     if (!cattle.length) {
       toast.error("Tidak ada data sapi untuk diekspor");
@@ -107,8 +199,9 @@ export default function CattleListPage() {
         "ID Sapi",
         "Nama",
         "Jenis",
+        "Jenis Kelamin",
+        "Kandang",
         "Status Kesehatan",
-        "Reproduksi",
         "Berat (kg)",
         "Terakhir diperiksa",
       ],
@@ -116,8 +209,9 @@ export default function CattleListPage() {
         item.id,
         item.name,
         item.breed,
-        item.health,
+        item.gender,
         item.status,
+        item.health,
         String(item.weight),
         item.lastCheck,
       ]),
@@ -130,10 +224,6 @@ export default function CattleListPage() {
     link.download = `sapi_export_${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
     toast.success("Export data sapi berhasil");
-  };
-
-  const handleAddCattle = () => {
-    toast.info("Fitur tambah sapi belum tersedia di versi saat ini.");
   };
 
   if (loading) {
@@ -172,11 +262,19 @@ export default function CattleListPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <button type="button" onClick={handleExport} className="inline-flex items-center gap-2 rounded-2xl border border-stone-200 bg-white px-4 py-2 text-sm font-medium text-stone-700 transition hover:border-[#54cd19] hover:bg-[#e7f6d7] dark:border-stone-800 dark:bg-stone-950 dark:text-stone-200">
+          <button
+            type="button"
+            onClick={handleExport}
+            className="inline-flex items-center gap-2 rounded-2xl border border-stone-200 bg-white px-4 py-2 text-sm font-medium text-stone-700 transition hover:border-[#54cd19] hover:bg-[#e7f6d7] dark:border-stone-800 dark:bg-stone-950 dark:text-stone-200"
+          >
             <FaDownload className="h-4 w-4 " />
             <p className="hidden lg:block">Export data</p>
           </button>
-          <button type="button" onClick={handleAddCattle} className="inline-flex items-center gap-2 rounded-2xl bg-[#54cd19] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#47b117]">
+          <button
+            type="button"
+            onClick={openCreateModal}
+            className="inline-flex items-center gap-2 rounded-2xl bg-[#54cd19] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#47b117]"
+          >
             <FaPlus className="h-4 w-4" />
             <p className="hidden lg:block">Tambah sapi</p>
           </button>
@@ -241,6 +339,14 @@ export default function CattleListPage() {
                   >
                     Edit
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeletingCattle(item)}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-100 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400"
+                  >
+                    <FaTrash className="h-3.5 w-3.5" />
+                    Hapus
+                  </button>
                 </div>
               </div>
             </div>
@@ -249,28 +355,37 @@ export default function CattleListPage() {
       </div>
 
       <Modal
-        isOpen={Boolean(editingCattle)}
-        onClose={closeEditModal}
-        title={editingCattle ? `Edit ${editingCattle.name}` : "Edit Sapi"}
+        isOpen={modalMode !== null}
+        onClose={closeFormModal}
+        title={
+          modalMode === "create"
+            ? "Tambah Sapi Baru"
+            : editingCattle
+              ? `Edit ${editingCattle.name}`
+              : "Edit Sapi"
+        }
       >
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-stone-700 dark:text-stone-200">
-              ID Sapi
-            </label>
-            <div className="mt-2 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-700 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-200">
-              {editingCattle?.id}
+          {modalMode === "edit" && editingCattle && (
+            <div>
+              <label className="block text-sm font-medium text-stone-700 dark:text-stone-200">
+                ID Sapi
+              </label>
+              <div className="mt-2 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-700 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-200">
+                {editingCattle.id}
+              </div>
             </div>
-          </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-stone-700 dark:text-stone-200">
               Nama
             </label>
             <input
-              value={editForm.name}
-              onChange={(event) => handleEditChange("name", event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-stone-900 outline-none transition focus:border-[#54cd19] focus:ring-2 focus:ring-[#54cd19]/20 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+              value={form.name}
+              onChange={(event) => handleFormChange("name", event.target.value)}
+              className={inputClassName}
+              placeholder="Contoh: LILI"
             />
           </div>
 
@@ -279,10 +394,41 @@ export default function CattleListPage() {
               Jenis
             </label>
             <input
-              value={editForm.breed}
-              onChange={(event) => handleEditChange("breed", event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-stone-900 outline-none transition focus:border-[#54cd19] focus:ring-2 focus:ring-[#54cd19]/20 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+              value={form.breed}
+              onChange={(event) => handleFormChange("breed", event.target.value)}
+              className={inputClassName}
+              placeholder="Contoh: Lokal, Friesian"
             />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-stone-700 dark:text-stone-200">
+                Jenis Kelamin
+              </label>
+              <select
+                value={form.gender}
+                onChange={(event) => handleFormChange("gender", event.target.value)}
+                className={selectClassName}
+              >
+                <option value="Betina">Betina</option>
+                <option value="Jantan">Jantan</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-stone-700 dark:text-stone-200">
+                Kandang
+              </label>
+              <select
+                value={form.kandang}
+                onChange={(event) => handleFormChange("kandang", event.target.value)}
+                className={selectClassName}
+              >
+                <option value="Individu">Individu</option>
+                <option value="KandangDara">Kandang Dara</option>
+                <option value="KoloniBesar">Koloni Besar</option>
+              </select>
+            </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
@@ -290,20 +436,25 @@ export default function CattleListPage() {
               <label className="block text-sm font-medium text-stone-700 dark:text-stone-200">
                 Kesehatan
               </label>
-              <input
-                value={editForm.health}
-                onChange={(event) => handleEditChange("health", event.target.value)}
-                className="mt-2 w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-stone-900 outline-none transition focus:border-[#54cd19] focus:ring-2 focus:ring-[#54cd19]/20 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
-              />
+              <select
+                value={form.health}
+                onChange={(event) => handleFormChange("health", event.target.value)}
+                className={selectClassName}
+              >
+                <option value="Sehat">Sehat</option>
+                <option value="Sakit">Sakit</option>
+                <option value="Mati">Mati</option>
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-stone-700 dark:text-stone-200">
-                Reproduksi
+                Tanggal Lahir
               </label>
               <input
-                value={editForm.status}
-                onChange={(event) => handleEditChange("status", event.target.value)}
-                className="mt-2 w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-stone-900 outline-none transition focus:border-[#54cd19] focus:ring-2 focus:ring-[#54cd19]/20 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+                type="date"
+                value={form.birthDate}
+                onChange={(event) => handleFormChange("birthDate", event.target.value)}
+                className={inputClassName}
               />
             </div>
           </div>
@@ -315,9 +466,11 @@ export default function CattleListPage() {
               </label>
               <input
                 type="number"
-                value={editForm.weight}
-                onChange={(event) => handleEditChange("weight", event.target.value)}
-                className="mt-2 w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-stone-900 outline-none transition focus:border-[#54cd19] focus:ring-2 focus:ring-[#54cd19]/20 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+                min="0"
+                value={form.weight}
+                onChange={(event) => handleFormChange("weight", event.target.value)}
+                className={inputClassName}
+                placeholder="Contoh: 520"
               />
             </div>
             <div>
@@ -325,27 +478,78 @@ export default function CattleListPage() {
                 Terakhir diperiksa
               </label>
               <input
-                value={editForm.lastCheck}
-                onChange={(event) => handleEditChange("lastCheck", event.target.value)}
-                className="mt-2 w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-stone-900 outline-none transition focus:border-[#54cd19] focus:ring-2 focus:ring-[#54cd19]/20 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+                type="date"
+                value={form.lastCheck}
+                onChange={(event) => handleFormChange("lastCheck", event.target.value)}
+                className={inputClassName}
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-stone-700 dark:text-stone-200">
+              Nomor Eartag (opsional)
+            </label>
+            <input
+              value={form.eartag}
+              onChange={(event) => handleFormChange("eartag", event.target.value)}
+              className={inputClassName}
+              placeholder="Nomor identifikasi sapi"
+            />
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
-              onClick={closeEditModal}
-              className="rounded-2xl border border-stone-200 bg-white px-4 py-2 text-sm font-medium text-stone-700 transition hover:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200"
+              onClick={closeFormModal}
+              disabled={saving}
+              className="rounded-2xl border border-stone-200 bg-white px-4 py-2 text-sm font-medium text-stone-700 transition hover:bg-stone-100 disabled:opacity-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200"
             >
               Batal
             </button>
             <button
               type="button"
-              onClick={handleSaveEdit}
-              className="rounded-2xl bg-[#54cd19] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#47b117]"
+              onClick={handleSave}
+              disabled={saving}
+              className="inline-flex items-center gap-2 rounded-2xl bg-[#54cd19] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#47b117] disabled:opacity-50"
             >
-              Simpan
+              {saving && <FaSpinner className="h-4 w-4 animate-spin" />}
+              {modalMode === "create" ? "Tambah" : "Simpan"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={Boolean(deletingCattle)}
+        onClose={() => !saving && setDeletingCattle(null)}
+        title="Hapus Sapi"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-stone-600 dark:text-stone-300">
+            Apakah Anda yakin ingin menghapus sapi{" "}
+            <span className="font-semibold text-stone-900 dark:text-stone-100">
+              {deletingCattle?.name} ({deletingCattle?.id})
+            </span>
+            ? Tindakan ini tidak dapat dibatalkan.
+          </p>
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setDeletingCattle(null)}
+              disabled={saving}
+              className="rounded-2xl border border-stone-200 bg-white px-4 py-2 text-sm font-medium text-stone-700 transition hover:bg-stone-100 disabled:opacity-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200"
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={saving}
+              className="inline-flex items-center gap-2 rounded-2xl bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-50"
+            >
+              {saving && <FaSpinner className="h-4 w-4 animate-spin" />}
+              Hapus
             </button>
           </div>
         </div>

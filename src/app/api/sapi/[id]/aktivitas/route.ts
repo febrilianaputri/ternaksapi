@@ -1,0 +1,47 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createActivity, listActivitiesForCattle } from "@/lib/sapi-service";
+import type { ActivityInput } from "@/lib/sapi";
+
+type RouteParams = { params: Promise<{ id: string }> };
+
+export async function GET(_request: NextRequest, { params }: RouteParams) {
+  const { id } = await params;
+
+  try {
+    const activities = await listActivitiesForCattle(id);
+    return NextResponse.json({ activities });
+  } catch (error) {
+    console.error("[GET /api/sapi/[id]/aktivitas]", error);
+    return NextResponse.json(
+      { error: "Gagal memuat log aktivitas" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest, { params }: RouteParams) {
+  const { id } = await params;
+
+  try {
+    const body = (await request.json()) as ActivityInput;
+
+    if (!body.kategori || !body.date) {
+      return NextResponse.json(
+        { error: "Kategori dan tanggal wajib diisi" },
+        { status: 400 }
+      );
+    }
+
+    const activity = await createActivity(id, body);
+    if (!activity) {
+      return NextResponse.json({ error: "Sapi tidak ditemukan" }, { status: 404 });
+    }
+
+    return NextResponse.json({ activity }, { status: 201 });
+  } catch (error) {
+    console.error("[POST /api/sapi/[id]/aktivitas]", error);
+    const message =
+      error instanceof Error ? error.message : "Gagal menambahkan aktivitas";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

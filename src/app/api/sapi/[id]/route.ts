@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { findCattleByParam } from "@/lib/sapi-service";
+import { deleteCattle, findCattleByParam, updateCattle } from "@/lib/sapi-service";
 import { fetchDataSensorFromRtdb } from "@/lib/firebase-rtdb";
-import prisma from "@/lib/prisma";
+import type { CattleInput } from "@/lib/sapi";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -41,6 +41,46 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     console.error("[GET /api/sapi/[id]]", error);
     return NextResponse.json(
       { error: "Gagal memuat detail sapi" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  const { id } = await params;
+
+  try {
+    const body = (await request.json()) as Partial<CattleInput>;
+    const cattle = await updateCattle(id, body);
+
+    if (!cattle) {
+      return NextResponse.json({ error: "Sapi tidak ditemukan" }, { status: 404 });
+    }
+
+    return NextResponse.json({ cattle });
+  } catch (error) {
+    console.error("[PATCH /api/sapi/[id]]", error);
+    return NextResponse.json(
+      { error: "Gagal memperbarui data sapi" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+  const { id } = await params;
+
+  try {
+    const deleted = await deleteCattle(id);
+    if (!deleted) {
+      return NextResponse.json({ error: "Sapi tidak ditemukan" }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("[DELETE /api/sapi/[id]]", error);
+    return NextResponse.json(
+      { error: "Gagal menghapus data sapi" },
       { status: 500 }
     );
   }
