@@ -3,11 +3,12 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import {
   fetchDataSensorFromRtdbDetailed,
-  mergeSensorsWithCattle,
   normalizeDataSensor,
+  buildFallbackSensors,
 } from "@/lib/firebase-rtdb";
 import type { DashboardAlert } from "@/lib/dashboard";
 import { sendTelegramNotification } from "@/lib/telegram";
+
 
 export async function GET() {
   try {
@@ -35,6 +36,8 @@ export async function GET() {
       cattleKandang,
       cattleEartag
     );
+
+    const matchedCount = parsedSensors.length;
 
     const rtdbEmpty = parsedSensors.length === 0;
     const sensors = rtdbEmpty && sapiList.length > 0
