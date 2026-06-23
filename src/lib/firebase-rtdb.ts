@@ -1,8 +1,9 @@
-// src/lib/firebase-rtdb.ts
 
-// ==========================================
-// 1. Fungsi Pembantu Utilitas & Identifikasi
-// ==========================================
+export function formatKandangLabel(kandang: string): string {
+  if (kandang === "KoloniBesar") return "Koloni Besar";
+  if (kandang === "KandangDara") return "Kandang Dara";
+  return kandang;
+}
 
 export function sensorKeyToIdsapi(key: string): number | null {
   const trimmed = key.trim();
@@ -125,7 +126,9 @@ function isMonitoringObject(obj: Record<string, unknown>): boolean {
 
 export function normalizeDataSensor(
   raw: unknown,
-  cattleNames: Map<number, string>
+  cattleNames: Map<number, string>,
+  cattleKandang?: Map<number, string>,
+  cattleEartag?: Map<number, string>
 ): { sensors: SensorReading[]; tempHistory: TempHistoryPoint[] } {
   if (!raw || typeof raw !== "object") {
     return { sensors: [], tempHistory: [] };
@@ -188,13 +191,18 @@ export function normalizeDataSensor(
       ? Math.floor((Date.now() - latest.timestamp) / 60000)
       : null;
 
+    const dbKandang = cattleKandang?.get(idSapiAngka);
+    const rtdbLokasi = pickString(timestampsNode, ["lokasi", "location", "posisi"]);
+    const location = rtdbLokasi || (dbKandang ? formatKandangLabel(dbKandang) : `Kandang ${cowKey}`);
+    const eartag = cattleEartag?.get(idSapiAngka) || pickString(timestampsNode, ["id", "sensorId"]) || `EARTAG-${idSapiAngka}`;
+
     sensors.push({
-      id: pickString(timestampsNode, ["id", "sensorId"]) ?? `SEN-${cowKey}`,
+      id: eartag,
       cattleId: cowKey,
       cattleName: namaSapi,
       battery: latest.battery !== null ? Math.max(0, Math.min(100, Math.round(latest.battery))) : 0,
       temperature: parseFloat(latest.temperature.toFixed(2)),
-      location: pickString(timestampsNode, ["lokasi", "location", "posisi"]) || `Kandang ${cowKey}`,
+      location,
       kandangKategori: "IoT",
       status: deriveStatus(latest.battery, latest.temperature, staleMinutes),
       lastUpdate: formatLastUpdate(latest.timestamp),
@@ -257,18 +265,20 @@ export async function fetchDataSensorFromRtdb(): Promise<unknown | null> {
 }
 
 export function buildFallbackSensors(
-  sapiList: { idsapi: number; nama_sapi: string; jenis_kelamin: string }[]
+  sapiList: { idsapi: number; nama_sapi: string; jenis_kelamin: string; kandang: string; nomor_eartag: string | null }[],
+  cattleEartag?: Map<number, string>
 ): SensorReading[] {
   return sapiList.map((s) => {
     const cattleId = idsapiToSensorKey(s.idsapi);
+    const eartag = cattleEartag?.get(s.idsapi) || s.nomor_eartag || `EARTAG-${s.idsapi}`;
     return {
-      id: `SEN-${cattleId}`,
+      id: eartag,
       cattleId,
       cattleName: s.nama_sapi,
       battery: 0,
       temperature: 0,
-      location: `Kandang ${cattleId}`,
-      kandangKategori: s.jenis_kelamin === "Betina" ? "Individu" : "Koloni",
+      location: formatKandangLabel(s.kandang),
+      kandangKategori: "IoT",
       status: "Error" as const,
       lastUpdate: "Menunggu data Firebase",
     };

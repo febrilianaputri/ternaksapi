@@ -2,16 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  FaSpinner,
-  FaExclamationTriangle,
-  FaPlus,
-  FaDownload,
-  FaTrash,
-} from "react-icons/fa";
+import { FaSpinner, FaExclamationTriangle, FaPlus, FaDownload, FaTrash} from "react-icons/fa";
 import { toast } from "sonner";
 import Modal from "@/components/ui/Modal";
 import type { CattleInput, CattleListItem } from "@/lib/sapi";
+import { formatKandangLabel } from "@/lib/sapi";
+import { cattleHealthColors, inputClassName } from "@/lib/styles";
 
 type CattleForm = {
   name: string;
@@ -37,10 +33,8 @@ const emptyForm = (): CattleForm => ({
   eartag: "",
 });
 
-const inputClassName =
-  "mt-2 w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-stone-900 outline-none transition focus:border-[#54cd19] focus:ring-2 focus:ring-[#54cd19]/20 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100";
-
-const selectClassName = inputClassName;
+// Tanggal hari ini untuk membatasi input date
+const today = new Date().toISOString().split("T")[0];
 
 function formToPayload(form: CattleForm): CattleInput {
   const weight = Number(form.weight);
@@ -194,17 +188,7 @@ export default function CattleListPage() {
       return;
     }
 
-    const rows = [
-      [
-        "ID Sapi",
-        "Nama",
-        "Jenis",
-        "Jenis Kelamin",
-        "Kandang",
-        "Status Kesehatan",
-        "Berat (kg)",
-        "Terakhir diperiksa",
-      ],
+    const rows = [[ "ID Sapi", "Nama", "Jenis", "Jenis Kelamin", "Kandang", "Status Kesehatan", "Berat (kg)", "Terakhir diperiksa"],
       ...cattle.map((item) => [
         item.id,
         item.name,
@@ -230,7 +214,6 @@ export default function CattleListPage() {
     return (
       <div className="p-6 min-h-[40vh] flex items-center justify-center gap-3 text-stone-500">
         <FaSpinner className="w-6 h-6 animate-spin" />
-        Memuat daftar sapi...
       </div>
     );
   }
@@ -253,35 +236,26 @@ export default function CattleListPage() {
     <div className="p-6">
       <div className="mb-6 flex flex-col gap-1 sm:gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-100">
-            Manajemen Sapi
-          </h1>
+          <div className="flex flex-wrap justify-between">
+            <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-100"> Manajemen Sapi </h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" onClick={handleExport} className="inline-flex items-center gap-2 rounded-2xl border border-stone-200 bg-white px-4 py-2 text-sm font-medium text-stone-700 transition hover:border-[#54cd19] hover:bg-[#e7f6d7] dark:border-stone-800 dark:bg-stone-950 dark:text-stone-200">
+                <FaDownload className="h-3 w-3 " />
+                <p className="hidden lg:block">Export data</p>
+              </button>
+              <button type="button" onClick={openCreateModal} className="inline-flex items-center gap-2 rounded-2xl bg-[#54cd19] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#47b117]">
+                <FaPlus className="h-3 w-3" />
+                <p className="hidden lg:block">Tambah sapi</p>
+              </button>
+            </div>
+          </div>
           <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
             Mengelola data setiap sapi yang ada dalam peternakan T-Cow°.
           </p>
         </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={handleExport}
-            className="inline-flex items-center gap-2 rounded-2xl border border-stone-200 bg-white px-4 py-2 text-sm font-medium text-stone-700 transition hover:border-[#54cd19] hover:bg-[#e7f6d7] dark:border-stone-800 dark:bg-stone-950 dark:text-stone-200"
-          >
-            <FaDownload className="h-4 w-4 " />
-            <p className="hidden lg:block">Export data</p>
-          </button>
-          <button
-            type="button"
-            onClick={openCreateModal}
-            className="inline-flex items-center gap-2 rounded-2xl bg-[#54cd19] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#47b117]"
-          >
-            <FaPlus className="h-4 w-4" />
-            <p className="hidden lg:block">Tambah sapi</p>
-          </button>
-        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {cattle.length === 0 ? (
           <div className="col-span-full rounded-3xl border border-dashed border-stone-300 bg-stone-50 dark:border-stone-700 dark:bg-stone-900 p-8 text-center text-stone-500">
             Belum ada data sapi tersedia.
@@ -294,17 +268,14 @@ export default function CattleListPage() {
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm uppercase tracking-[0.2em] text-stone-500">
-                    {item.id}
-                  </p>
                   <h3 className="mt-2 text-xl font-semibold text-stone-900 dark:text-stone-100">
                     {item.name}
                   </h3>
                   <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-                    {item.breed} • {item.status}
+                    {item.breed} • {formatKandangLabel(item.status)}
                   </p>
                 </div>
-                <div className="rounded-2xl bg-[#e7f6d7] px-3 py-1 text-sm font-medium text-[#2f6d0f] dark:bg-[#214d0e]/30 dark:text-[#d0f5a5]">
+                <div className={"rounded-2xl px-3 py-1 text-sm font-medium " + (cattleHealthColors[item.health] ?? cattleHealthColors.Sehat)}>
                   {item.health}
                 </div>
               </div>
@@ -326,24 +297,14 @@ export default function CattleListPage() {
 
               <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap gap-2">
-                  <Link
-                    href={`/dashboard/cattle/${item.id}`}
-                    className="inline-flex items-center gap-2 rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm font-medium text-stone-700 transition hover:border-[#54cd19] hover:bg-[#e7f6d7] dark:border-stone-800 dark:bg-stone-900 dark:text-stone-200"
-                  >
+                  <Link href={`/dashboard/cattle/${item.id}`} className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50 px-3 py-2 text-sm font-medium text-stone-700 transition hover:border-[#54cd19] hover:bg-[#e7f6d7] dark:border-stone-800 dark:bg-stone-900 dark:text-stone-200">
                     Lihat detail
                   </Link>
-                  <button
-                    type="button"
-                    onClick={() => openEditModal(item)}
-                    className="inline-flex items-center gap-2 rounded-2xl border border-[#54cd19] bg-[#54cd19] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#47b117]"
-                  >
+                  <button type="button" onClick={() => openEditModal(item)} className="inline-flex items-center gap-2 rounded-full border border-[#54cd19] bg-[#54cd19] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#47b117]">
                     Edit
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeletingCattle(item)}
-                    className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-100 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400"
-                  >
+                  <button type="button" onClick={() => setDeletingCattle(item)} className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-100 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400"
+                    >
                     <FaTrash className="h-3.5 w-3.5" />
                     Hapus
                   </button>
@@ -366,17 +327,6 @@ export default function CattleListPage() {
         }
       >
         <div className="space-y-4">
-          {modalMode === "edit" && editingCattle && (
-            <div>
-              <label className="block text-sm font-medium text-stone-700 dark:text-stone-200">
-                ID Sapi
-              </label>
-              <div className="mt-2 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-700 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-200">
-                {editingCattle.id}
-              </div>
-            </div>
-          )}
-
           <div>
             <label className="block text-sm font-medium text-stone-700 dark:text-stone-200">
               Nama
@@ -385,7 +335,7 @@ export default function CattleListPage() {
               value={form.name}
               onChange={(event) => handleFormChange("name", event.target.value)}
               className={inputClassName}
-              placeholder="Contoh: LILI"
+              placeholder="Nama sapi"
             />
           </div>
 
@@ -409,7 +359,7 @@ export default function CattleListPage() {
               <select
                 value={form.gender}
                 onChange={(event) => handleFormChange("gender", event.target.value)}
-                className={selectClassName}
+                className={inputClassName}
               >
                 <option value="Betina">Betina</option>
                 <option value="Jantan">Jantan</option>
@@ -422,7 +372,7 @@ export default function CattleListPage() {
               <select
                 value={form.kandang}
                 onChange={(event) => handleFormChange("kandang", event.target.value)}
-                className={selectClassName}
+                className={inputClassName}
               >
                 <option value="Individu">Individu</option>
                 <option value="KandangDara">Kandang Dara</option>
@@ -439,7 +389,7 @@ export default function CattleListPage() {
               <select
                 value={form.health}
                 onChange={(event) => handleFormChange("health", event.target.value)}
-                className={selectClassName}
+                className={inputClassName}
               >
                 <option value="Sehat">Sehat</option>
                 <option value="Sakit">Sakit</option>
@@ -455,6 +405,7 @@ export default function CattleListPage() {
                 value={form.birthDate}
                 onChange={(event) => handleFormChange("birthDate", event.target.value)}
                 className={inputClassName}
+                max={today}
               />
             </div>
           </div>
@@ -482,13 +433,14 @@ export default function CattleListPage() {
                 value={form.lastCheck}
                 onChange={(event) => handleFormChange("lastCheck", event.target.value)}
                 className={inputClassName}
+                max={today}
               />
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-stone-700 dark:text-stone-200">
-              Nomor Eartag (opsional)
+              Nomor Eartag
             </label>
             <input
               value={form.eartag}

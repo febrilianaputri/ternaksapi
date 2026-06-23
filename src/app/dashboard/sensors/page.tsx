@@ -92,7 +92,6 @@ function TempDisplay({ temp, offline }: { temp: number; offline?: boolean }) {
   );
 }
 
-// ── Trend arrow ───────────────────────────────────────────────────────
 function TrendIcon({
   cattleKey,
   history,
@@ -113,16 +112,7 @@ function TrendIcon({
 }
 
 export default function SensorMonitoring() {
-  const {
-    sensors,
-    tempHistory: history,
-    cowNames,
-    loading,
-    error,
-    refresh,
-    updatedAt,
-    source,
-  } = useSensors(30000);
+  const { sensors, tempHistory: history, cowNames, loading, error, refresh, updatedAt, source} = useSensors(30000);
   const [refreshing, setRefreshing] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
@@ -152,14 +142,12 @@ export default function SensorMonitoring() {
     setRefreshing(true);
     await refresh();
     setRefreshing(false);
-    toast.success("Data sensor diperbarui dari Firebase");
   };
 
   if (loading && sensors.length === 0) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[40vh] gap-3 text-stone-500">
         <FaSpinner className="w-6 h-6 animate-spin text-[#54cd19]" />
-        Memuat data sensor
       </div>
     );
   }
@@ -189,11 +177,11 @@ export default function SensorMonitoring() {
 
       {source === "mysql-fallback" && (
         <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
-          Data sensor Firebase belum tersedia, hubungi atau lapor ke teknisi.
+          Data belum masuk, hubungi atau lapor ke teknisi.
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-row items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-stone-800 dark:text-stone-100">
             Monitoring Suhu Tubuh Sapi
@@ -202,15 +190,13 @@ export default function SensorMonitoring() {
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="flex items-center gap-2 border border-stone-300 dark:border-stone-600 hover:border-emerald-500 text-stone-700 dark:text-stone-300 px-4 py-2 rounded-xl text-sm font-medium transition-colors"
-        >
+          className="flex items-center gap-2 border border-stone-300 dark:border-stone-600 hover:border-emerald-500 text-stone-700 dark:text-stone-300 px-4 py-2 rounded-xl text-sm font-medium transition-colors">
           <FaSync className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
-          Refresh
+          <span className="hidden lg:block">Refresh</span>
         </button>
       </div>
 
-      <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-2.5 text-sm text-blue-700 dark:text-blue-300">
-        <FaInfoCircle className="w-4 h-4 shrink-0" />
+      <div className="flex items-center gap-2 border-[#e5d7c4]/20 dark:border-[#354024]/30 bg-[#354024] rounded-b-xl px-4 py-2.5 text-sm text-white">
         <span>
           Suhu normal sapi: <strong>{suhuRendah}°C – {suhuTinggi}°C</strong>.
           Data direkam setiap 6 jam selama 7 hari untuk kebutuhan analisis Machine Learning perubahan suhu.
@@ -219,16 +205,22 @@ export default function SensorMonitoring() {
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: "Sensor Aktif",   value: activeCount,  icon: FaBroadcastTower,       color: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400" },
-          { label: "Baterai Rendah", value: lowBatCount,  icon: FaBatteryHalf,     color: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400" },
-          { label: "Error / Offline",value: errorCount,   icon: FaExclamationTriangle, color: "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400" },
-          { label: "Suhu Tinggi / Demam", value: feverCount, icon: FaThermometerHalf, color: "bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400" },
+          { label: "Sensor Aktif",   value: activeCount,  icon: FaBroadcastTower },
+          { label: "Baterai Rendah", value: lowBatCount,  icon: FaBatteryHalf},
+          { label: "Offline",value: errorCount,   icon: FaExclamationTriangle},
+          { label: "Suhu Tinggi", value: feverCount, icon: FaThermometerHalf},
         ].map((s) => (
-          <div key={s.label} className={`${s.color} rounded-xl p-4`}>
-            <s.icon className="w-5 h-5 mb-2" />
-            <div className="text-2xl font-bold">{s.value}</div>
-            <div className="text-sm mt-0.5 opacity-80">{s.label}</div>
+        <div key={s.label} className="bg-white dark:bg-[#232b1c] rounded-2xl border border-[#e5d7c4]/20 dark:border-[#354024]/30 p-4 sm:p-5 transition-shadow duration-30">
+          <div className={`w-9 h-9 sm:w-12 sm:h-12 rounded-xl bg-[#cfbb99]/50 dark:bg-[#cfbb99]/20 text-[#354024] dark:text-[#cfbb99] flex items-center justify-center shadow-sm`}>
+            <s.icon className="w-3 h-3 sm:w-6 sm:h-6" />
           </div>
+          <div className="mt-4">
+            <p className="text-sm text-stone-500 dark:text-[#cfbb99]">{s.label}</p>
+            <p className="text-2xl md:text-4xl font-bold text-[#354024] dark:text-[#e5d7c4] mt-1 leading-none">
+              {s.value}
+            </p>
+          </div>
+        </div>
         ))}
       </div>
 
@@ -255,14 +247,11 @@ export default function SensorMonitoring() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center"
-                      style={{ backgroundColor: cowColors[cowKey] + "22" }}
-                    >
-                      <FaThermometerHalf className="w-5 h-5" style={{ color: cowColors[cowKey] }} />
+                      className="w-10 h-10 rounded-xl flex text-[#cfbb99]/50 dark:text-[#cfbb99]/20 items-center justify-center">
+                      <FaThermometerHalf className="w-5 h-5" />
                     </div>
                     <div>
                       <p className="font-semibold text-stone-800 dark:text-stone-200 text-sm">{sensor.cattleName}</p>
-                      <p className="text-xs text-stone-400 font-mono">{sensor.id}</p>
                     </div>
                   </div>
                   <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusStyle[sensor.status] ?? ""}`}>
@@ -295,7 +284,6 @@ export default function SensorMonitoring() {
                   <span>·</span>
                   <span>{sensor.lastUpdate}</span>
                 </div>
-                {/* Baterai */}
                 <div>
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <FaBatteryHalf className="w-3.5 h-3.5 text-stone-400" />
@@ -303,7 +291,6 @@ export default function SensorMonitoring() {
                   </div>
                   <BatteryBar level={sensor.battery} />
                 </div>
-                {/* Threshold bar */}
                 {!isOffline && (
                   <div>
                     <div className="flex justify-between text-[10px] text-stone-400 mb-1">
@@ -340,36 +327,14 @@ export default function SensorMonitoring() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
           <div>
             <h3 className="font-semibold text-stone-800 dark:text-stone-200">
-              Grafik Suhu Tubuh — 7 Hari Terakhir
+              Grafik Suhu Tubuh
             </h3>
-            <p className="text-xs text-stone-400 mt-0.5">
-              Riwayat suhu dari Firebase · {history.length} data poin
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(cowNames).map(([key, name]) => (
-              <button
-                key={key}
-                onClick={() => toggleCow(key)}
-                className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-all ${
-                  selected.includes(key)
-                    ? "border-transparent text-white font-medium"
-                    : "border-stone-300 dark:border-stone-600 text-stone-400 bg-transparent"
-                }`}
-                style={selected.includes(key) ? { backgroundColor: cowColors[key] } : {}}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                {name}
-              </button>
-            ))}
           </div>
         </div>
 
         {history.length === 0 ? (
           <p className="text-sm text-stone-500 dark:text-stone-400 py-16 text-center">
-            Belum ada riwayat suhu di Firebase. Pastikan node{" "}
-            <code className="text-xs bg-stone-100 dark:bg-stone-800 px-1 rounded">dataSensor</code>{" "}
-            terisi di Realtime Database.
+            Belum ada riwayat suhu 
           </p>
         ) : (
         <ResponsiveContainer width="100%" height={320}>
@@ -423,15 +388,21 @@ export default function SensorMonitoring() {
           </LineChart>
         </ResponsiveContainer>
         )}
-
-        <div className="flex flex-wrap gap-3 mt-3 justify-center">
-          {Object.entries(cowNames).map(([key, name]) => (
-            <div key={key} className={`flex items-center gap-1.5 text-xs ${selected.includes(key) ? "text-stone-600 dark:text-stone-300" : "text-stone-300 dark:text-stone-600"}`}>
-              <div className="w-5 h-0.5 rounded" style={{ backgroundColor: selected.includes(key) ? cowColors[key] : "#d4d4d4" }} />
-              {name} ({key})
-            </div>
-          ))}
-        </div>
+        <div className="flex flex-wrap gap-2">
+            {Object.entries(cowNames).map(([key, name]) => (
+              <button
+                key={key}
+                onClick={() => toggleCow(key)}
+                className={`flex items-center gap-1.5 text-xs px-3 py-1 rounded-full border transition-all ${
+                  selected.includes(key)
+                    ? "border-transparent text-white font-medium"
+                    : "border-stone-300 dark:border-stone-600 text-stone-400 bg-transparent"
+                }`}
+                style={selected.includes(key) ? { backgroundColor: cowColors[key] } : {}}>
+                {name}
+              </button>
+            ))}
+          </div>
       </div>
 
       <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-100 dark:border-stone-800 overflow-hidden">
@@ -442,7 +413,7 @@ export default function SensorMonitoring() {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-stone-50 dark:bg-stone-800 border-b border-stone-200 dark:border-stone-700">
-                {["Sensor ID", "Sapi", "Status Sensor", "Lokasi", "Suhu Tubuh", "Status Suhu", "Baterai", "Update Terakhir"].map((h) => (
+                {["Eartag", "Sapi", "Sensor", "Lokasi", "Suhu Tubuh", "Status Suhu", "Baterai", "Update Terakhir"].map((h) => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wide whitespace-nowrap">
                     {h}
                   </th>
@@ -450,23 +421,14 @@ export default function SensorMonitoring() {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td colSpan={8} className="px-4 pt-4 pb-2 bg-teal-50 dark:bg-teal-900/10 border-y border-teal-200 dark:border-teal-800">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-teal-700 dark:text-teal-400 uppercase tracking-wide">Kandang Koloni</span>
-                    <span className="text-xs text-teal-500">{sensors.length} sensor aktif</span>
-                  </div>
-                </td>
-              </tr>
               {sensors.map((s) => {
                 const st = s.status === "Error" ? null : tempStatus(s.temperature);
                 return (
                   <tr key={s.id} className={`hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors ${s.temperature > suhuTinggi && s.status !== "Error" ? "bg-red-50/30 dark:bg-red-900/5" : ""}`}>
-                    <td className="px-4 py-3 font-mono text-xs text-stone-500">{s.id}</td>
+                    <td className="px-4 py-3 font-mono text-sm text-stone-500">{s.id}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cowColors[s.cattleId] }} />
-                        <span className="font-medium text-stone-700 dark:text-stone-300">{s.cattleName}</span>
+                        <span className="font-medium text-white dark:text-stone-300 py-1 px-2 rounded-full" style={{ backgroundColor: cowColors[s.cattleId] }}>{s.cattleName}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3">
@@ -498,53 +460,6 @@ export default function SensorMonitoring() {
                 );
               })}
 
-              <tr>
-                <td colSpan={8} className="px-4 pt-4 pb-2 bg-violet-50 dark:bg-violet-900/10 border-y border-violet-200 dark:border-violet-800">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-violet-700 dark:text-violet-400 uppercase tracking-wide">Kandang Individu</span>
-                    <span className="text-xs text-violet-500">— {sensors.length} sensor aktif</span>
-                  </div>
-                </td>
-              </tr>
-              {sensors.map((s) => {
-                const st = s.status === "Error" ? null : tempStatus(s.temperature);
-                return (
-                  <tr key={s.id} className={`hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors ${s.temperature > suhuTinggi && s.status !== "Error" ? "bg-red-50/30 dark:bg-red-900/5" : ""}`}>
-                    <td className="px-4 py-3 font-mono text-xs text-stone-500">{s.id}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cowColors[s.cattleId] }} />
-                        <span className="font-medium text-stone-700 dark:text-stone-300">{s.cattleName}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusStyle[s.status] ?? ""}`}>{s.status}</span>
-                    </td>
-                    <td className="px-4 py-3 text-stone-500 dark:text-stone-400">{s.location}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1">
-                        <FaThermometerHalf className="w-3.5 h-3.5 text-stone-400" />
-                        <span className={`font-semibold ${s.status === "Error" ? "text-stone-400" : s.temperature > suhuTinggi ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}`}>
-                          {s.temperature.toFixed(1)}°C
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      {st ? (
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${st.bg} ${st.color}`}>{st.label}</span>
-                      ) : (
-                        <span className="text-xs text-stone-400">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs font-medium ${s.battery >= 60 ? "text-emerald-600 dark:text-emerald-400" : s.battery >= 30 ? "text-amber-600 dark:text-amber-400" : "text-red-500"}`}>
-                        {s.battery > 0 ? `${s.battery}%` : "Habis"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-stone-400">{s.lastUpdate}</td>
-                  </tr>
-                );
-              })}
             </tbody>
           </table>
         </div>

@@ -15,6 +15,8 @@ import {
 } from "react-icons/fa";
 import { toast } from "sonner";
 import Modal from "@/components/ui/Modal";
+import { formatKandangLabel } from "@/lib/sapi";
+import { cattleHealthColors, statusColors } from "@/lib/styles";
 import type {
   ActivityInput,
   CattleListItem,
@@ -63,22 +65,8 @@ const emptyActivityForm = (): ActivityForm => ({
   jenisTindakan: "Obat_Cacing",
 });
 
-const healthColors: Record<string, string> = {
-  Sehat: "bg-[#e7f6d7] dark:bg-[#354024]/30 text-[#54cd19] dark:text-[#54cd19]",
-  Perhatian: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400",
-  Sakit: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400",
-  Mati: "bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400",
-};
-
-const statusColors: Record<string, string> = {
-  Laktasi: "bg-[#e7f6d7] dark:bg-[#354024]/30 text-[#54cd19] dark:text-[#54cd19]",
-  Bunting: "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400",
-  Kering: "bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-400",
-  Dara: "bg-[#e7f6d7] dark:bg-[#354024]/30 text-[#54cd19] dark:text-[#54cd19]",
-  Individu: "bg-[#e7f6d7] dark:bg-[#354024]/30 text-[#54cd19] dark:text-[#54cd19]",
-  KandangDara: "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400",
-  KoloniBesar: "bg-[#e7f6d7] dark:bg-[#354024]/30 text-[#54cd19] dark:text-[#54cd19]",
-};
+// Tanggal hari ini untuk membatasi input date
+const today = new Date().toISOString().split("T")[0];
 
 function extractActivityDetail(detail: string): string {
   const parts = detail.split(" — ");
@@ -370,7 +358,6 @@ export default function CattleProfilePage() {
     return (
       <div className="p-6 flex items-center justify-center min-h-[40vh] gap-3 text-stone-500">
         <FaSpinner className="w-6 h-6 animate-spin" />
-        Memuat profil sapi...
       </div>
     );
   }
@@ -380,10 +367,7 @@ export default function CattleProfilePage() {
       <div className="p-6">
         <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-100 dark:border-stone-800 p-12 text-center">
           <p className="text-stone-400">Sapi dengan ID {cattleId} tidak ditemukan</p>
-          <button
-            onClick={() => router.back()}
-            className="mt-4 flex items-center gap-2 text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 transition-colors"
-          >
+          <button onClick={() => router.back()} className="mt-4 flex items-center gap-2 text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 transition-colors">
             <FaArrowLeft className="w-4 h-4" />
             Kembali
           </button>
@@ -405,14 +389,14 @@ export default function CattleProfilePage() {
           <h1 className="text-2xl font-bold text-stone-800 dark:text-stone-100">
             {cattle.name}
           </h1>
-          <p className="text-stone-400 text-sm">{cattle.id} · {cattle.breed}</p>
+          <p className="text-stone-400 text-sm">{cattle.breed}</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className={"px-3 py-1 rounded-full text-sm font-medium " + (healthColors[cattle.health] ?? healthColors.Sehat)}>
+          <span className={"px-3 py-1 rounded-full text-sm font-medium " + (cattleHealthColors[cattle.health] ?? cattleHealthColors.Sehat)}>
             {cattle.health}
           </span>
-          <span className={"px-3 py-1 rounded-full text-sm font-medium " + (statusColors[cattle.status] ?? statusColors.KoloniBesar)}>
-            {cattle.status}
+          <span className={"px-3 py-1 rounded-full text-sm font-medium " + (statusColors[cattle.status] ?? statusColors.Individu)}>
+            {formatKandangLabel(cattle.status)}
           </span>
         </div>
       </div>
@@ -441,10 +425,6 @@ export default function CattleProfilePage() {
             <h3 className="font-semibold text-stone-800 dark:text-stone-200 mb-4">Informasi Dasar</h3>
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-stone-400">ID Sapi</p>
-                <p className="font-medium text-stone-800 dark:text-stone-100">{cattle.id}</p>
-              </div>
-              <div>
                 <p className="text-sm text-stone-400">Nama</p>
                 <p className="font-medium text-stone-800 dark:text-stone-100">{cattle.name}</p>
               </div>
@@ -466,33 +446,7 @@ export default function CattleProfilePage() {
               </div>
               <div>
                 <p className="text-sm text-stone-400">Kandang</p>
-                <p className="font-medium text-stone-800 dark:text-stone-100">{cattle.stall}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-100 dark:border-stone-800 p-6">
-            <h3 className="font-semibold text-stone-800 dark:text-stone-200 mb-4">Status Saat Ini</h3>
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-stone-400">Kesehatan</p>
-                <span className={"inline-block px-3 py-1 rounded-full text-sm font-medium " + (healthColors[cattle.health] ?? healthColors.Sehat)}>
-                  {cattle.health}
-                </span>
-              </div>
-              <div>
-                <p className="text-sm text-stone-400">Status Produksi</p>
-                <span className={"inline-block px-3 py-1 rounded-full text-sm font-medium " + (statusColors[cattle.status] ?? statusColors.KoloniBesar)}>
-                  {cattle.status}
-                </span>
-              </div>
-              <div>
-                <p className="text-sm text-stone-400">Berat</p>
-                <p className="font-medium text-stone-800 dark:text-stone-100">{cattle.weight} kg</p>
-              </div>
-              <div>
-                <p className="text-sm text-stone-400">Kandang</p>
-                <p className="font-medium text-stone-800 dark:text-stone-100">{cattle.stall}</p>
+                <p className="font-medium text-stone-800 dark:text-stone-100">{formatKandangLabel(cattle.status)}</p>
               </div>
             </div>
           </div>
@@ -731,6 +685,7 @@ export default function CattleProfilePage() {
                 setMedicalForm((current) => ({ ...current, date: event.target.value }))
               }
               className={inputClassName}
+              max={today}
             />
           </div>
           <div>
@@ -860,6 +815,7 @@ export default function CattleProfilePage() {
                   setActivityForm((current) => ({ ...current, date: event.target.value }))
                 }
                 className={inputClassName}
+                max={today}
               />
             </div>
             <div>

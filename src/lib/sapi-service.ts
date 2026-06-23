@@ -682,3 +682,98 @@ export async function deleteActivity(
   `;
   return true;
 }
+
+// Tipe data untuk export lengkap
+export type FullExportData = {
+  exportDate: string;
+  summary: {
+    totalSapi: number;
+    totalInformasiFisik: number;
+    totalRiwayatMedis: number;
+    totalRiwayatReproduksi: number;
+  };
+  sapi: Array<{
+    idsapi: number;
+    nomor_eartag: string | null;
+    nama_sapi: string;
+    jenis_sapi: string;
+    jenis_kelamin: string;
+    kandang: string;
+    tanggal_lahir: string;
+    status_hidup: string;
+    keteranganStatus: string | null;
+  }>;
+  informasiFisik: Array<{
+    idfisik: number;
+    idsapi: number;
+    berat_badan: number;
+    tanggal_timbang: string;
+  }>;
+  riwayatMedis: Array<{
+    id_medis: number;
+    idsapi: number;
+    jenis_tindakan: string;
+    tanggal_medis: string;
+    catatan: string | null;
+  }>;
+  riwayatReproduksi: Array<{
+    id_reproduksi: number;
+    idsapi: number;
+    tanggal_ib: string;
+    nama_pejantan: string;
+    keterangan: string | null;
+  }>;
+};
+
+/**
+ * Mengambil semua data untuk export lengkap (sapi, informasi_fisik, riwayat_medis, riwayat_reproduksi)
+ */
+export async function buildFullExportData(): Promise<FullExportData> {
+  const [sapiList, informasiFisikList, riwayatMedisList, riwayatReproduksiList] = await Promise.all([
+    prisma.sapi.findMany({ orderBy: { idsapi: "asc" } }),
+    prisma.informasi_fisik.findMany({ orderBy: { idsapi: "asc" } }),
+    prisma.riwayatmedis.findMany({ orderBy: { idsapi: "asc" } }),
+    prisma.riwayatreproduksi.findMany({ orderBy: { idsapi: "asc" } }),
+  ]);
+
+  return {
+    exportDate: new Date().toISOString(),
+    summary: {
+      totalSapi: sapiList.length,
+      totalInformasiFisik: informasiFisikList.length,
+      totalRiwayatMedis: riwayatMedisList.length,
+      totalRiwayatReproduksi: riwayatReproduksiList.length,
+    },
+    sapi: sapiList.map((s) => ({
+      idsapi: s.idsapi,
+      nomor_eartag: s.nomor_eartag,
+      nama_sapi: s.nama_sapi,
+      jenis_sapi: s.jenis_sapi,
+      jenis_kelamin: s.jenis_kelamin,
+      kandang: s.kandang,
+      tanggal_lahir: s.tanggal_lahir.toISOString().split("T")[0],
+      status_hidup: s.status_hidup,
+      keteranganStatus: s.keteranganStatus,
+    })),
+    informasiFisik: informasiFisikList.map((f) => ({
+      idfisik: f.idfisik,
+      idsapi: f.idsapi,
+      berat_badan: f.berat_badan,
+      tanggal_timbang: f.tanggal_timbang.toISOString().split("T")[0],
+    })),
+    riwayatMedis: riwayatMedisList.map((m) => ({
+      id_medis: m.id_medis,
+      idsapi: m.idsapi,
+      jenis_tindakan: m.jenis_tindakan,
+      tanggal_medis: m.tanggal_medis.toISOString().split("T")[0],
+      catatan: m.catatan,
+    })),
+    riwayatReproduksi: riwayatReproduksiList.map((r) => ({
+      id_reproduksi: r.id_reproduksi,
+      idsapi: r.idsapi,
+      tanggal_ib: r.tanggal_ib.toISOString().split("T")[0],
+      nama_pejantan: r.nama_pejantan,
+      keterangan: r.keterangan,
+    })),
+  };
+}

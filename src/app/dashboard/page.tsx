@@ -9,6 +9,7 @@ import {  XAxis,  YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart,
 import { toast } from "sonner";
 import { useSensors } from "@/hooks/useSensors";
 import { getChartColor, type DashboardData, type DashboardAlert } from "@/lib/dashboard";
+import { alertColors, dashboardStatusStyle, healthProgressColors } from "@/lib/styles";
 
 function StatCard({title, value, sub,icon: Icon,iconBg,trend,link}: {
   title: string;
@@ -20,16 +21,13 @@ function StatCard({title, value, sub,icon: Icon,iconBg,trend,link}: {
   link?: string;
 }) {
   return (
-    <div className="bg-white dark:bg-[#232b1c] rounded-2xl border border-[#e5d7c4]/20 dark:border-[#354024]/30 p-5 hover:shadow-md transition-shadow">
+    <div className="bg-white dark:bg-[#232b1c] rounded-2xl border border-[#e5d7c4]/20 dark:border-[#354024]/30 p-5 transition-shadow">
       <div className="flex items-start justify-between">
         <div className={`w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center`}>
           <Icon className="w-6 h-6" />
         </div>
         {link && (
-          <Link
-            href={link}
-            className="text-stone-400 hover:text-[#54cd19] transition-colors"
-          >
+          <Link href={link} className="text-stone-400 hover:text-[#54cd19] transition-colors">
             <FaArrowRight className="w-5 h-5" />
           </Link>
         )}
@@ -62,12 +60,6 @@ function StatCard({title, value, sub,icon: Icon,iconBg,trend,link}: {
 }
 
 function AlertItem({ alert }: { alert: DashboardAlert }) {
-  const colors = {
-    danger: "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400",
-    warning: "border-[#cfbb99]/30 dark:border-[#cfbb99]/20 bg-[#cfbb99]/10 dark:bg-[#cfbb99]/5 text-amber-800 dark:text-[#cfbb99]",
-    info: "border-[#889063]/30 dark:border-[#889063]/20 bg-[#889063]/10 dark:bg-[#889063]/5 text-stone-700 dark:text-stone-300",
-    success: "border-[#54cd19]/30 dark:border-[#54cd19]/20 bg-[#54cd19]/10 dark:bg-[#54cd19]/5 text-[#354024] dark:text-[#54cd19]",
-  };
   const icons = {
     danger: FaExclamationTriangle,
     warning: FaExclamationCircle,
@@ -77,7 +69,7 @@ function AlertItem({ alert }: { alert: DashboardAlert }) {
   const Icon = icons[alert.type] || FaInfoCircle;
 
   return (
-    <div className={`flex gap-3 p-3 rounded-xl border ${colors[alert.type] || colors.info}`}>
+    <div className={`flex gap-3 p-3 rounded-xl border ${alertColors[alert.type] || alertColors.info}`}>
       <Icon className="w-5 h-5 shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-stone-800 dark:text-stone-200 truncate">
@@ -94,12 +86,6 @@ function AlertItem({ alert }: { alert: DashboardAlert }) {
     </div>
   );
 }
-
-const statusStyle: Record<string, string> = {
-  Sehat: "border-[#54cd19]/30 dark:border-[#54cd19]/20 bg-[#54cd19]/10 dark:bg-[#54cd19]/5 text-[#354024] dark:text-[#54cd19]",
-  Perhatian: "border-[#cfbb99]/30 dark:border-[#cfbb99]/20 bg-[#cfbb99]/10 dark:bg-[#cfbb99]/5 text-amber-800 dark:text-[#cfbb99]",
-  Sakit: "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400",
-};
 
 export default function MainDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -288,22 +274,24 @@ export default function MainDashboard() {
 
         <div className="bg-white dark:bg-[#232b1c] rounded-2xl border border-[#e5d7c4]/20 dark:border-[#354024]/30 p-5">
           <h3 className="font-semibold text-[#354024] dark:text-[#e5d7c4]  mb-4">Informasi Kesehatan Sapi</h3>
-          <div className="space-y-3">
+          <div className="space-y-3 text-sm">
             {[
-              { label: "Sehat", count: stats.healthy, color: "bg-[#54cd19]" },
-              { label: "Sakit", count: stats.sick, color: "bg-red-500" },
-              { label: "Mati", count: stats.dead, color: "bg-stone-500" },
+              { label: "Sehat", count: stats.healthy, color: healthProgressColors.Sehat },
+              { label: "Sakit", count: stats.sick, color: healthProgressColors.Sakit },
+              { label: "Mati", count: stats.dead, color: healthProgressColors.Mati },
             ].map((item) => (
               <div key={item.label}>
-                <div className="flex items-center justify-between text-sm mb-1.5">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${item.color}`} />
-                    <span className="text-stone-600 dark:text-[#cfbb99]">{item.label}</span>
-                  </div>
-                  <span className="font-medium text-[#354024] dark:text-[#e5d7c4]">{item.count} ekor</span>
+                <div className="flex justify-end items-center mb-1.5">                  
+                  <span className="font-semibold text-[#3e9413] dark:text-[#e5d7c4]">
+                    {item.count} ekor
+                  </span>
                 </div>
-                <div className="h-2 bg-[#e5d7c4]/30 dark:bg-[#354024]/30 rounded-full overflow-hidden">
-                  <div className={`h-full ${item.color} rounded-full transition-all duration-700`} style={{ width: `${(item.count / total) * 100}%` }}/>
+                <div className="h-6 bg-[#e5d7c4]/30 dark:bg-[#354024]/30 rounded-full overflow-hidden">
+                  <div className={`h-full ${item.color} rounded-full transition-all duration-700 flex items-center justify-end px-3`} style={{ width: `${(item.count / total) * 100}%` }}  >
+                    <span className="text-[10px] font-bold uppercase tracking-wide truncate whitespace-nowrap text-white/90 drop-shadow-sm">
+                      {item.label}
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -313,11 +301,11 @@ export default function MainDashboard() {
             <h4 className="text-xs font-medium text-stone-500 dark:text-[#cfbb99] tracking-wide mb-3">
               Timbangan sapi
             </h4>
-            <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-48 overflow-y-auto custom-scrollbar">
             {cattle.length === 0 ? (
               <p className="text-xs text-stone-500">Tidak ada data sapi aktif.</p>
             ) : (cattle.map((c: any) => (
-                <div key={c.idsapi} className={`flex items-center justify-between px-3 py-2 rounded-lg border text-xs ${statusStyle[c.status_kesehatan] ?? statusStyle.Sehat}`}>
+                <div key={c.idsapi} className={`flex items-center justify-between px-3 py-2 rounded-lg border text-xs ${dashboardStatusStyle[c.status_kesehatan] ?? dashboardStatusStyle.Sehat}`}>
                   <span className="font-medium truncate mr-2">{c.nama_sapi || `Sapi ${c.idsapi}`}</span>
                   <span className="font-semibold shrink-0">
                     {c.bb_akhir !== null ? `${c.bb_akhir} kg` : c.status_kesehatan}
@@ -361,7 +349,7 @@ export default function MainDashboard() {
           { to: "/dashboard/sensors", icon: FaBalanceScale, label: "Monitoring Sensor", count: "Suhu telinga realtime" },
           { to: "/dashboard/cattle", icon: FaExclamationTriangle, label: "Butuh Penanganan", count: `${needsAction} ekor diperiksa` },
         ].map((item) => (
-          <Link key={item.label} href={item.to} className="flex items-center gap-3 bg-white dark:bg-[#232b1c] rounded-xl border border-[#e5d7c4]/20 dark:border-[#354024]/30 p-4 hover:shadow-md transition-shadow">
+          <Link key={item.label} href={item.to} className="flex items-center gap-3 bg-white dark:bg-[#232b1c] rounded-xl border border-[#e5d7c4]/20 dark:border-[#354024]/30 p-4 transition-shadow">
             <div className="w-8 h-8 rounded-lg bg-[#54cd19]/30 dark:bg-[#54cd19]/20 flex items-center justify-center">
               <item.icon className="w-5 h-5 text-[#354024] dark:text-[#54cd19]" />
             </div>

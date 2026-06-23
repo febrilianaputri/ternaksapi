@@ -113,3 +113,9 @@ export function mapKesehatanType(status: string): string {
   if (status === "Perhatian") return "Pemeriksaan";
   return "Pemeriksaan Rutin";
 }
+
+export function formatKandangLabel(kandang: string): string {
+  if (kandang === "KoloniBesar") return "Koloni Besar";
+  if (kandang === "KandangDara") return "Kandang Dara";
+  return kandang;
+}
