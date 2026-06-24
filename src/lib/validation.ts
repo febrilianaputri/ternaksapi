@@ -21,7 +21,7 @@ export function isValidEmailFormat(email: string): boolean {
 export type PasswordCheck = { label: string; valid: boolean };
 
 const PASSWORD_RULES: Array<{ label: string; test: (p: string) => boolean }> = [
-  { label: "Minimal 5 karakter", test: (p) => p.length >= 5 },
+  { label: "Minimal 8 karakter", test: (p) => p.length >= 8 },
   { label: "Satu huruf kecil", test: (p) => /[a-z]/.test(p) },
   { label: "Satu huruf besar", test: (p) => /[A-Z]/.test(p) },
   { label: "Satu angka", test: (p) => /\d/.test(p) },

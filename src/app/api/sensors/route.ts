@@ -9,25 +9,27 @@ import {
 import type { DashboardAlert } from "@/lib/dashboard";
 import { sendTelegramNotification } from "@/lib/telegram";
 
+// Definisikan tipe struktur data Sapi dari Prisma agar tidak terdeteksi 'any'
+interface SapiType {
+  idsapi: number;
+  nama_sapi: string;
+  jenis_kelamin: string;
+  kandang: string;
+  nomor_eartag: string | null;
+  status_hidup: string;
+}
 
 export async function GET() {
   try {
     const sapiList = await prisma.sapi.findMany({
       orderBy: { idsapi: "asc" },
       select: { idsapi: true, nama_sapi: true, jenis_kelamin: true, kandang: true, nomor_eartag: true, status_hidup: true },
-    });
-    const cattleNames = new Map(
-      sapiList.map((s) => [s.idsapi, s.nama_sapi])
-    );
-    const cattleKandang = new Map(
-      sapiList.map((s) => [s.idsapi, s.kandang])
-    );
-    const cattleEartag = new Map(
-      sapiList.map((s) => [s.idsapi, s.nomor_eartag ?? `EARTAG-${s.idsapi}`])
-    );
-    const cattleHealth = new Map(
-      sapiList.map((s) => [s.idsapi, s.status_hidup])
-    );
+    }) as SapiType[];
+
+    // Berikan tipe eksplisit pada Map agar tidak dibaca <unknown, unknown>
+    const cattleNames = new Map<number, string>(sapiList.map((s: SapiType) => [s.idsapi, s.nama_sapi]));
+    const cattleKandang = new Map<number, string>(sapiList.map((s: SapiType) => [s.idsapi, s.kandang]));
+    const cattleEartag = new Map<number, string>(sapiList.map((s: SapiType) => [s.idsapi, s.nomor_eartag ?? `EARTAG-${s.idsapi}`]));
 
     const { data: raw, error: fetchError } = await fetchDataSensorFromRtdbDetailed();
     const { sensors: parsedSensors, tempHistory } = normalizeDataSensor(
@@ -38,14 +40,14 @@ export async function GET() {
     );
 
     const matchedCount = parsedSensors.length;
-
     const rtdbEmpty = parsedSensors.length === 0;
+    
     const sensors = rtdbEmpty && sapiList.length > 0
       ? buildFallbackSensors(sapiList, cattleEartag)
       : parsedSensors;
 
     if (!rtdbEmpty) {
-      sensors.forEach((sapi) => {
+      sensors.forEach((sapi: any) => {
         if (sapi.offline) return;
 
         const batasSuhuDemam = 39.5;
@@ -65,10 +67,7 @@ export async function GET() {
             `_Mohon petugas lapangan segera mengecek kondisi kesehatan sapi._`;
 
           sendTelegramNotification(pesanSuhuTinggi);
-        } else if (
-          sapi.temperature > 0 &&
-          sapi.temperature < batasSuhuKritisRendah
-        ) {
+        } else if (sapi.temperature > 0 && sapi.temperature < batasSuhuKritisRendah) {
           const pesanSuhuRendah =
             `⚠️ *PERINGATAN T-COW°: SUHU KRITIS/ABNORMAL* ⚠️\n\n` +
             `🐮 *Nama Sapi:* ${sapi.cattleName}\n` +
@@ -100,13 +99,11 @@ export async function GET() {
     }
 
     const alerts: DashboardAlert[] = sensors
-      .filter((s) => s.status !== "Aktif")
-      .map((s) => ({
+      .filter((s: any) => s.status !== "Aktif")
+      .map((s: any) => ({
         id: `sensor-${s.id}`,
-        type:
-          s.status === "Error"
-            ? ("danger" as const)
-            : ("warning" as const),
+        // Mengembalikan ke "danger" sesuai dengan tipe DashboardAlert tim kamu
+        type: s.status === "Error" ? ("danger" as const) : ("warning" as const),
         title: `Sensor ${s.cattleName}`,
         message: s.offline
           ? fetchError ?? "Menunggu data dari Firebase Realtime Database"
@@ -120,7 +117,7 @@ export async function GET() {
       tempHistory,
       alerts,
       cowNames: Object.fromEntries(
-        sapiList.map((s) => [
+        sapiList.map((s: SapiType) => [
           `S${String(s.idsapi).padStart(3, "0")}`,
           s.nama_sapi,
         ])
