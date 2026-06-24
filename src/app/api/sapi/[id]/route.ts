@@ -14,15 +14,12 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     }
 
     const cattleId = cattle.id;
-    
-    // Fetch sensor data from Firebase
     let sensorData = null;
     try {
       const raw = await fetchDataSensorFromRtdb();
       sensorData = raw ? buildCattleSensorData(raw, cattle.idsapi) : null;
     } catch (error) {
-      console.error("Error fetching sensor data:", error);
-      // Continue without sensor data
+      console.error(error);
     }
 
     return NextResponse.json({

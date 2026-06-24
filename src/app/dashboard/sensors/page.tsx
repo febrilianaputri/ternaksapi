@@ -165,16 +165,18 @@ export default function SensorMonitoring() {
   const lowBatCount   = sensors.filter((s) => s.status === "Baterai Rendah").length;
   const errorCount    = sensors.filter((s) => s.status === "Error").length;
   const feverCount    = sensors.filter((s) => s.temperature > suhuTinggi && s.status !== "Error").length;
-
-  
   const toggleCow = (key: string) =>
     setSelected((prev) =>
       prev.includes(key) ? (prev.length > 1 ? prev.filter((k) => k !== key) : prev) : [...prev, key]
     );
-
+    const gridColsClass = {
+      1: "lg:grid-cols-1",
+      2: "lg:grid-cols-2",
+      3: "lg:grid-cols-3",
+      4: "lg:grid-cols-4",
+    }[Math.min(sensors.length, 4) as 1 | 2 | 3 | 4] || "lg:grid-cols-4";
   return (
     <div className="p-6 space-y-6">
-
       {source === "mysql-fallback" && (
         <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
           Data belum masuk, hubungi atau lapor ke teknisi.
@@ -229,8 +231,7 @@ export default function SensorMonitoring() {
           <h3 className="text-sm font-semibold text-stone-700 dark:text-stone-300 uppercase tracking-wide">Monitoring Sapi</h3>
         </div>
         <div className="overflow-x-auto pb-2">
-          <div className="grid grid-rows-2 grid-cols-4 gap-4 min-w-max">
-          {sensors.map((sensor) => {
+        <div className={`grid grid-cols-1 sm:grid-cols-2 ${gridColsClass} gap-4 w-full`}>          {sensors.map((sensor) => {
             const cowKey = sensor.cattleId;
             const st = sensor.offline ? null : tempStatus(sensor.temperature);
             const isOffline = Boolean(sensor.offline);

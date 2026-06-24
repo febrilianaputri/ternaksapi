@@ -10,7 +10,6 @@ import {
 
 export async function GET() {
   try {
-    // 1. Ambil data secara paralel menggunakan nama model huruf kecil sesuai schema.prisma
     const [sapiList, riwayatMedisList, informasiFisikList, riwayatReproduksiList] = await Promise.all([
       prisma.sapi.findMany({
         orderBy: { idsapi: "asc" },
@@ -25,14 +24,11 @@ export async function GET() {
         orderBy: { tanggal_ib: "desc" },
       }),
     ]);
-
-    // Map untuk mencari berat badan (bb_akhir) terbaru berdasarkan idsapi
     const latestFisik = new Map<number, (typeof informasiFisikList)[number]>();
     for (const row of informasiFisikList) {
       latestFisik.set(row.idsapi, row);
     }
 
-    // Map untuk mencari riwayat reproduksi terakhir berdasarkan idsapi
     const latestRepro = new Map<number, (typeof riwayatReproduksiList)[number]>();
     for (const row of riwayatReproduksiList) {
       if (!latestRepro.has(row.idsapi)) {
@@ -40,7 +36,6 @@ export async function GET() {
       }
     }
 
-    // Map untuk mencari data nama sapi berdasarkan idsapi (karena di skema tidak ada relasi include)
     const sapiMap = new Map<number, (typeof sapiList)[number]>();
     for (const s of sapiList) {
       sapiMap.set(s.idsapi, s);
@@ -50,11 +45,10 @@ export async function GET() {
     let sick = 0;
     let dead = 0;
 
-    // 2. Pemetaan baris data tabel sapi dashboard
     const cattle: DashboardCattleRow[] = sapiList.map((s) => {
       const fisik = latestFisik.get(s.idsapi);
       const repro = latestRepro.get(s.idsapi);
-      const status = s.status_hidup; // Mengambil dari enum sapi_status_hidup (Sehat, Sakit, Mati)
+      const status = s.status_hidup;
 
       if (status === "Sehat") healthy++;
       else if (status === "Sakit") sick++;
@@ -78,22 +72,18 @@ export async function GET() {
           : s.sapiUpdate.toISOString(),
       };
     });
-
-    // 3. Kalkulasi rata-rata berat badan dari informasi_fisik
     const weights = informasiFisikList.map((f) => f.berat_badan);
     const avgWeight =
       weights.length > 0
         ? parseFloat((weights.reduce((a, b) => a + b, 0) / weights.length).toFixed(1))
         : null;
 
-    // 4. Struktur data grafik lingkaran komposisi sapi
     const chartSapi = sapiList.map((s, i) => ({
       key: String(s.idsapi),
       label: s.nama_sapi || `Sapi ID ${s.idsapi}`,
       color: getChartColor(i),
     }));
 
-    // 5. Struktur data grafik pertumbuhan berat badan (informasi_fisik)
     const chartBuckets = new Map<string, Record<string, string | number>>();
     for (const f of informasiFisikList) {
       const d = f.tanggal_timbang;
@@ -109,7 +99,6 @@ export async function GET() {
     }
     const produksiChart = Array.from(chartBuckets.values()).slice(-12);
 
-    // 6. Alert log penanganan medis kritikal
     const alerts = riwayatMedisList
       .map((m) => {
         const terkaitSapi = sapiMap.get(m.idsapi);
@@ -118,7 +107,6 @@ export async function GET() {
           sapi: terkaitSapi,
         };
       })
-      // Memfilter alert hanya untuk sapi yang status_hidup-nya Sakit atau Mati
       .filter((m) => m.sapi && m.sapi.status_hidup !== "Sehat")
       .slice(0, 8)
       .map((m) => ({
@@ -141,7 +129,6 @@ export async function GET() {
       });
     }
 
-    // 7. Satukan data berdasarkan tipe DashboardData kustom kita
     const data: DashboardData = {
       stats: {
         totalSapi: sapiList.length,

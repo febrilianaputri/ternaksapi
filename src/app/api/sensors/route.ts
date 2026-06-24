@@ -1,14 +1,9 @@
-// src/app/api/sensors/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import {
-  fetchDataSensorFromRtdbDetailed,
-  normalizeDataSensor,
-  buildFallbackSensors,
-} from "@/lib/firebase-rtdb";
+import { fetchDataSensorFromRtdbDetailed, normalizeDataSensor, buildFallbackSensors} from "@/lib/firebase-rtdb";
 import type { DashboardAlert } from "@/lib/dashboard";
 import { sendTelegramNotification } from "@/lib/telegram";
-import { shouldSendNotification } from "@/lib/ratelimit"; // Impor helper cooldown notification
+import { shouldSendNotification } from "@/lib/ratelimit";
 
 interface SapiType {
   idsapi: number;
@@ -46,7 +41,6 @@ export async function GET() {
       : parsedSensors;
 
     if (!rtdbEmpty) {
-      // Mengubah ke async loop karena kita perlu melakukan 'await' ke Redis
       for (const sapi of sensors as any[]) {
         if (sapi.offline) continue;
 
@@ -54,7 +48,6 @@ export async function GET() {
         const batasSuhuKritisRendah = 36.0;
         const batasBateraiLemah = 25;
 
-        // --- 1. PROTEKSI NOTIFIKASI SUHU TINGGI (DEMAM) ---
         if (sapi.temperature > batasSuhuDemam) {
           if (await shouldSendNotification(sapi.cattleId, "demam")) {
             const pesanSuhuTinggi =
@@ -71,7 +64,6 @@ export async function GET() {
             sendTelegramNotification(pesanSuhuTinggi);
           }
         } 
-        // --- 2. PROTEKSI NOTIFIKASI SUHU REndah ---
         else if (sapi.temperature > 0 && sapi.temperature < batasSuhuKritisRendah) {
           if (await shouldSendNotification(sapi.cattleId, "suhu-rendah")) {
             const pesanSuhuRendah =
@@ -89,7 +81,6 @@ export async function GET() {
           }
         }
 
-        // --- 3. PROTEKSI NOTIFIKASI BATERAI LEMAH ---
         if (sapi.battery <= batasBateraiLemah) {
           if (await shouldSendNotification(sapi.cattleId, "baterai")) {
             const pesanBaterai =
@@ -129,6 +120,12 @@ export async function GET() {
         sapiList.map((s: SapiType) => [
           `S${String(s.idsapi).padStart(3, "0")}`,
           s.nama_sapi,
+        ])
+      ),
+      cowEartags: Object.fromEntries(
+        sapiList.map((s: SapiType) => [
+          `S${String(s.idsapi).padStart(3, "0")}`,
+          s.nomor_eartag ?? `EARTAG-${s.idsapi}`,
         ])
       ),
       updatedAt: new Date().toISOString(),

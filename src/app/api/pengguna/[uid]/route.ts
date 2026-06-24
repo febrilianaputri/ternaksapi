@@ -53,7 +53,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
     if (!existing) {
       return NextResponse.json(
-        { error: "Pengguna tidak ditemukan di database" },
+        { error: "Pengguna tidak ditemukan" },
         { status: 404 }
       );
     }

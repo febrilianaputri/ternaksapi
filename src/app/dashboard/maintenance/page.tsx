@@ -24,9 +24,7 @@ const statusIcons: Record<string, React.ElementType> = {
   Selesai: FaCheckCircle,
 };
 
-// Tanggal hari ini untuk membatasi input date
 const today = new Date().toISOString().split("T")[0];
-
 type MaintenanceItem = {
   id: string;
   sensorId: string;
@@ -43,7 +41,7 @@ export default function MaintenancePage() {
   const [maintenanceData, setMaintenanceData] = useState<MaintenanceItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("Semua");
-  const filters = ["Semua", "Menunggu", "Dalam Proses", "Selesai"];
+  const filters = ["Semua", "Dalam Proses", "Selesai"];
   const [showAddModal, setShowAddModal] = useState(false);
   useEffect(() => {
     (async () => {
@@ -76,7 +74,6 @@ export default function MaintenancePage() {
   const pendingCount = maintenanceData.filter((m) => m.status === "Menunggu").length;
   const inProgressCount = maintenanceData.filter((m) => m.status === "Dalam Proses").length;
   const doneCount = maintenanceData.filter((m) => m.status === "Selesai").length;
-
   const handleAddMaintenance = (e: React.FormEvent) => {
     e.preventDefault();
     toast.success("Maintenance berhasil ditambahkan");
@@ -94,9 +91,9 @@ export default function MaintenancePage() {
 
   const handleExport = () => {
     const csvContent = [
-      ["ID", "Tipe", "Prioritas", "Sensor ID", "Tanggal", "Petugas", "Status", "Deskripsi"],
+      ["Tipe", "Prioritas", "Sensor ID", "Tanggal", "Petugas", "Status", "Deskripsi"],
       ...filtered.map(m => [
-        m.id, m.type, m.priority, m.sensorId, m.date, m.technician, m.status, m.description
+        m.type, m.priority, m.sensorId, m.date, m.technician, m.status, m.description
       ])
     ].map(row => row.join(",")).join("\n");
 
@@ -112,14 +109,12 @@ export default function MaintenancePage() {
     return (
       <div className="p-6 flex items-center justify-center min-h-[40vh] gap-3 text-stone-500">
         <FaSpinner className="w-6 h-6 animate-spin" />
-        Memuat data maintenance...
       </div>
     );
   }
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-stone-800 dark:text-stone-100">
@@ -131,38 +126,31 @@ export default function MaintenancePage() {
         </div>
         <div className="flex gap-3">
           {user?.role && user.role !== "Peternak" && (
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
-            >
+            <button onClick={() => setShowAddModal(true)} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors">
               <FaPlus className="w-4 h-4" /> Tambah Maintenance
             </button>
           )}
-          <button
-            onClick={handleExport}
-            className="flex items-center gap-2 border border-stone-300 dark:border-stone-600 rounded-lg bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors px-4 py-2"
-          >
-            <FaDownload className="w-4 h-4" /> Ekspor
+          <button onClick={handleExport} className="flex items-center gap-2 border border-stone-300 dark:border-stone-600 rounded-full bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors px-4 py-2">
+            <FaDownload className="w-3 h-3" /> <span className="hidden lg:block">Ekspor Data</span>
           </button>
         </div>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: "Menunggu", value: pendingCount, icon: FaExclamationTriangle, color: "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400" },
-          { label: "Dalam Proses", value: inProgressCount, icon: FaClock, color: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400" },
-          { label: "Selesai", value: doneCount, icon: FaCheckCircle, color: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400" },
+          { label: "Menunggu", value: pendingCount, icon: FaExclamationTriangle, iconBg:"bg-red-100 dark:bg-red-900/30", textColor:"text-red-600 dark:text-red-400" },
+          { label: "Sedang Diperbaiki", value: inProgressCount, icon: FaClock, iconBg:"bg-amber-100 dark:bg-amber-900/30", textColor:"text-amber-600 dark:text-amber-400" },
+          { label: "Selesai", value: doneCount, icon: FaCheckCircle, iconBg: "bg-emerald-100 dark:bg-emerald-900/30", textColor:"text-emerald-600 dark:text-emerald-400" },
         ].map((s) => (
-          <div key={s.label} className={`${s.color} rounded-xl p-4`}>
-            <s.icon className="w-5 h-5 mb-2" />
-            <div className="text-2xl font-bold">{s.value}</div>
-            <div className="text-sm mt-0.5 opacity-80">{s.label}</div>
+          <div key={s.label} className={`${s.iconBg} rounded-2xl border border-[#e5d7c4]/20 dark:border-[#354024]/30 p-5 transition-shadow`}>
+            <div className="mt-4">
+              <p className="text-2xl font-bold text-[#354024] dark:text-[#e5d7c4]">{s.value}</p>
+              <p className={`text-sm text-stone-500 dark:text-[#cfbb99] mt-1 ${s.textColor}` }>{s.label}</p>
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Filter */}
       <div className="flex gap-2 bg-stone-100 dark:bg-stone-800 p-1 rounded-xl w-fit">
         {filters.map((f) => (
           <button
@@ -179,10 +167,9 @@ export default function MaintenancePage() {
         ))}
       </div>
 
-      {/* Maintenance Cards */}
       <div className="space-y-4">
         {filtered.length === 0 ? (
-          <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-100 dark:border-stone-800 p-12 text-center">
+          <div className="bg-white dark:bg-stone-950 rounded-2xl border border-stone-100 dark:border-stone-800 p-12 text-center">
             <FaWrench className="w-12 h-12 text-stone-300 dark:text-stone-600 mx-auto mb-3" />
             <p className="text-stone-400">Tidak ada data maintenance</p>
           </div>
@@ -190,48 +177,36 @@ export default function MaintenancePage() {
           filtered.map((item) => {
             const StatusIcon = statusIcons[item.status];
             return (
-              <div
-                key={item.id}
-                className={`bg-white dark:bg-stone-900 rounded-2xl border ${priorityStyle[item.priority]} p-5`}
-              >
+              <div key={item.id} className={`bg-white dark:bg-stone-950 rounded-2xl border ${priorityStyle[item.priority]} p-5`}>
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h3 className="font-semibold text-stone-800 dark:text-stone-200 text-lg">{item.type}</h3>
-                    <p className="text-stone-400 text-sm">{item.id}</p>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyle[item.status]}`}>
                     {item.status}
                   </span>
                 </div>
-
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-sm">
                     <span className="text-stone-400">Prioritas:</span>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${priorityStyle[item.priority]}`}>
-                      {item.priority}
-                    </span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${priorityStyle[item.priority]}`}>{item.priority}</span>
                   </div>
-
                   <div className="flex items-center gap-2 text-sm">
                     <span className="text-stone-400">Lokasi:</span>
                     <span className="font-medium text-stone-700 dark:text-stone-300">{item.sensorId}</span>
                   </div>
-
                   <div className="flex items-center gap-2 text-sm">
                     <span className="text-stone-400">Tanggal:</span>
                     <span className="font-medium text-stone-700 dark:text-stone-300">{item.date}</span>
                   </div>
-
                   <div className="flex items-center gap-2 text-sm">
                     <span className="text-stone-400">Estimasi:</span>
                     <span className="font-medium text-stone-700 dark:text-stone-300">{item.priority}</span>
                   </div>
-
                   <div>
                     <p className="text-sm text-stone-400 mb-1">Deskripsi:</p>
                     <p className="text-stone-600 dark:text-stone-300 leading-relaxed">{item.description}</p>
                   </div>
-
                   <div className="flex items-center gap-2 text-sm">
                     <span className="text-stone-400">Petugas:</span>
                     <div className="flex items-center gap-2">
@@ -239,7 +214,6 @@ export default function MaintenancePage() {
                       <span className="font-medium text-stone-700 dark:text-stone-300">{item.technician}</span>
                     </div>
                   </div>
-
                   <div className="flex items-center gap-2 text-sm">
                     <span className="text-stone-400">Status:</span>
                     <div className="flex items-center gap-2">
@@ -247,7 +221,6 @@ export default function MaintenancePage() {
                       <span className="font-medium text-stone-700 dark:text-stone-300">{item.status}</span>
                     </div>
                   </div>
-
                   <div className="flex items-center gap-2 text-sm">
                     <span className="text-stone-400">Catatan:</span>
                     <span className="font-medium text-stone-700 dark:text-stone-300">{item.description || "—"}</span>
@@ -259,38 +232,18 @@ export default function MaintenancePage() {
         )}
       </div>
 
-      {/* Add Maintenance Modal */}
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Tambah Maintenance Baru">
         <form onSubmit={handleAddMaintenance} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">ID Maintenance</label>
-              <input
-                type="text"
-                required
-                value={formData.id}
-                onChange={(e) => setFormData({ ...formData, id: e.target.value })}
-                className="w-full px-3 py-2 border border-stone-300 dark:border-stone-600 rounded-lg bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                placeholder="Contoh: MNT-001"
-              />
-            </div>
-            <div>
               <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Tipe Maintenance</label>
-              <input
-                type="text"
-                required
-                value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full px-3 py-2 border border-stone-300 dark:border-stone-600 rounded-lg bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                placeholder="Contoh: Penggantian Baterai"
-              />
+              <input type="text" required value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })} className="w-full px-3 py-2 border border-stone-300 dark:border-stone-600 rounded-lg bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-emerald-500 focus:border-transparent" placeholder="Penggantian Baterai"/>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Prioritas</label>
-              <select
-                value={formData.priority}
+              <select value={formData.priority}
                 onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
                 className="w-full px-3 py-2 border border-stone-300 dark:border-stone-600 rounded-lg bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               >

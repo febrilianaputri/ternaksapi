@@ -3,13 +3,15 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { FaWrench, FaUsers, FaBell, FaMoon, FaSun, FaSignOutAlt, FaChevronRight, FaChevronDown, FaCog, FaExclamationTriangle, FaExclamationCircle, FaCheckCircle, FaInfoCircle, FaBook, FaCamera } from "react-icons/fa";
+import { FaWrench, FaUsers, FaBell, FaMoon, FaSun, FaSignOutAlt, FaChevronRight, FaChevronDown, FaCog, FaExclamationTriangle, FaExclamationCircle, FaCheckCircle, FaInfoCircle, FaBook } from "react-icons/fa";
 import { LuLayoutDashboard } from "react-icons/lu";
 import { MdOutlineMonitorHeart } from "react-icons/md";
 import { GiCow } from "react-icons/gi";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import type { DashboardAlert } from "@/lib/dashboard";
+import type { HealthAlert } from "@/lib/firebase-rtdb";
+import { fetchDataSensorFromRtdb, extractHealthAlerts } from "@/lib/firebase-rtdb";
 import { TCowLogo } from "@/components/ui/TCowLogo";
 import { RealtimeClock } from "@/components/ui/RealtimeClock";
 import { toast } from "sonner";
@@ -34,7 +36,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         { href: "/dashboard/sensors", label: "Monitoring Sapi" }
       ]
     },
-    { href: "/dashboard/scan", icon: FaCamera, mobileIcon: FaCamera, label: "Scan Kamera", isSubmenu: true },
     { href: "/dashboard/maintenance", icon: FaWrench, label: "Maintenance", isSubmenu: true },
     { href: "/dashboard/admin", icon: FaUsers, label: "Manajemen Pengguna", isSubmenu: true },
     { href: "/dashboard/config", icon: FaCog, label: "Manajemen Sistem", isSubmenu: true },
@@ -43,7 +44,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const peternakNavItems = [
     { href: "/dashboard", icon: null, mobileIcon: LuLayoutDashboard, label: "Dashboard", isMain: true, exact: true },
     { href: "/dashboard/cattle", icon: GiCow, label: "Manajemen Sapi", isSubmenu: true },
-    { href: "/dashboard/scan", icon: FaCamera, mobileIcon: FaCamera, label: "Scan Kamera", isSubmenu: true },
     { href: "/dashboard/sensors", icon: MdOutlineMonitorHeart, label: "Monitoring Sapi", isSubmenu: true },
     { href: "/dashboard/maintenance", icon: FaWrench, label: "Maintenance Sistem", isSubmenu: true },
   ];
@@ -53,6 +53,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [userOpen, setUserOpen] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [alertsData, setAlertsData] = useState<DashboardAlert[]>([]);
+  const [firebaseAlerts, setFirebaseAlerts] = useState<HealthAlert[]>([]);
   const { user, logout, isAuthenticated, isLoading } = useAuth();
   const { isDark, toggleTheme, mounted } = useTheme();
   const pathname = usePathname();
@@ -64,27 +65,42 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     }
   }, [isLoading, isAuthenticated, router]);
 
+  // Fetch health alerts dari Firebase (sama seperti Alert Kesehatan Sapi Hidup di dashboard)
   useEffect(() => {
     (async () => {
       try {
-        const [dashRes, sensorRes] = await Promise.all([
-          fetch("/api/dashboard"),
-          fetch("/api/sensors"),
-        ]);
-        const merged: DashboardAlert[] = [];
-        if (dashRes.ok) {
-          const dash = (await dashRes.json()) as { alerts?: DashboardAlert[] };
-          merged.push(...(dash.alerts ?? []));
-        }
-        if (sensorRes.ok) {
-          const sensors = (await sensorRes.json()) as {
-            alerts?: DashboardAlert[];
-          };
-          merged.push(...(sensors.alerts ?? []));
-        }
-        setAlertsData(merged.slice(0, 8));
-      } catch {
+        const sensorRes = await fetch("/api/sensors");
+        if (!sensorRes.ok) return;
+
+        const sensors = await sensorRes.json() as {
+          cowNames?: Record<string, string>;
+          cowEartags?: Record<string, string>;
+        };
+
+        if (!sensors.cowNames || Object.keys(sensors.cowNames).length === 0) return;
+
+        const raw = await fetchDataSensorFromRtdb();
+        if (!raw) return;
+
+        const cattleNames = new Map<number, string>();
+        Object.entries(sensors.cowNames).forEach(([key, name]) => {
+          const match = key.match(/\d+/);
+          if (match) cattleNames.set(parseInt(match[0], 10), name);
+        });
+
+        const cattleEartags = new Map<number, string>();
+        Object.entries(sensors.cowEartags ?? {}).forEach(([key, eartag]) => {
+          const match = key.match(/\d+/);
+          if (match) cattleEartags.set(parseInt(match[0], 10), eartag);
+        });
+
+        const healthAlerts = extractHealthAlerts(raw, cattleNames, cattleEartags);
+        setFirebaseAlerts(healthAlerts);
+        setAlertsData(healthAlerts.slice(0, 8));
+      } catch (e) {
+        console.error("Error fetching health alerts:", e);
         setAlertsData([]);
+        setFirebaseAlerts([]);
       }
     })();
   }, [isAuthenticated]);
@@ -103,7 +119,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   const navItems = user?.role === "Teknisi" ? teknisiNavItems : peternakNavItems;
   const unreadAlerts = alertsData.filter((a) => !a.read).length;
-
   const isActive = (href: string, exact?: boolean) => {
     if (exact) return pathname === href;
     return pathname === href || pathname.startsWith(href + "/");
@@ -283,29 +298,35 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     <span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full">{unreadAlerts} baru</span>
                   </div>
                   <div className="max-h-72 overflow-y-auto divide-y divide-[#e5d7c4]/20 dark:divide-[#354024]/30">
-                    {alertsData.slice(0, 5).map((alert) => (
-                      <div key={alert.id} className={`px-4 py-3 hover:bg-[#e5d7c4]/20 dark:hover:bg-[#354024]/30 transition-colors ${!alert.read ? "bg-[#54cd19]/10 dark:bg-[#54cd19]/5" : ""}`}>
-                        <div className="flex gap-2 items-start">
-                          <span className="text-base mt-0.5">
-                            {alert.type === "danger" ? (
-                              <FaExclamationTriangle className="w-5 h-5 text-red-500" />
-                            ) : alert.type === "warning" ? (
-                              <FaExclamationCircle className="w-5 h-5 text-yellow-500" />
-                            ) : alert.type === "success" ? (
-                              <FaCheckCircle className="w-5 h-5 text-green-500" />
-                            ) : (
-                              <FaInfoCircle className="w-5 h-5 text-blue-500" />
-                            )}
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-[#354024] dark:text-[#e5d7c4]">{alert.title}</p>
-                            <p className="text-xs text-stone-500 dark:text-[#cfbb99] mt-0.5 leading-relaxed">{alert.message}</p>
-                            <p className="text-xs text-stone-400 dark:text-[#cfbb99] mt-1">{alert.time}</p>
-                          </div>
-                          {!alert.read && <div className="w-2 h-2 bg-[#54cd19] rounded-full mt-1.5 shrink-0" />}
-                        </div>
+                    {alertsData.length === 0 ? (
+                      <div className="px-4 py-6 text-center">
+                        <FaCheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+                        <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Semua Sapi Sehat</p>
+                        <p className="text-xs text-stone-400 mt-1">Tidak ada alert kesehatan</p>
                       </div>
-                    ))}
+                    ) : (
+                      alertsData.slice(0, 5).map((alert) => (
+                        <div key={alert.id} className={`px-4 py-3 hover:bg-[#e5d7c4]/20 dark:hover:bg-[#354024]/30 transition-colors ${!alert.read ? "bg-[#54cd19]/10 dark:bg-[#54cd19]/5" : ""}`}>
+                          <div className="flex gap-2 items-start">
+                            <span className="text-base mt-0.5">
+                              {alert.type === "danger" ? (
+                                <FaExclamationTriangle className="w-5 h-5 text-red-500" />
+                              ) : alert.type === "warning" ? (
+                                <FaExclamationCircle className="w-5 h-5 text-yellow-500" />
+                              ) : (
+                                <FaInfoCircle className="w-5 h-5 text-blue-500" />
+                              )}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-[#354024] dark:text-[#e5d7c4]">{alert.title}</p>
+                              <p className="text-xs text-stone-500 dark:text-[#cfbb99] mt-0.5 leading-relaxed">{alert.message}</p>
+                              <p className="text-xs text-stone-400 dark:text-[#cfbb99] mt-1">{alert.time}</p>
+                            </div>
+                            {!alert.read && <div className="w-2 h-2 bg-[#54cd19] rounded-full mt-1.5 shrink-0" />}
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                   <div className="p-2 border-t border-[#e5d7c4]/20 dark:border-[#354024]/30">
                     <button className="w-full py-1 text-xs text-[#54cd19] dark:text-[#889063] hover:underline text-center">Lihat semua notifikasi</button>
@@ -344,9 +365,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     <Link href="/dashboard/settings" className="flex items-center gap-2 w-full px-4 py-2 text-sm text-stone-600 dark:text-[#cfbb99] hover:bg-[#e5d7c4]/20 dark:hover:bg-[#354024]/30 transition-colors">
                       <FaCog className="w-4 h-4" /> Pengaturan
                     </Link>
-                    <Link href="/dashboard/reports" className="flex items-center gap-2 w-full px-4 py-2 text-sm text-stone-600 dark:text-[#cfbb99] hover:bg-[#e5d7c4]/20 dark:hover:bg-[#354024]/30 transition-colors">
-                      <FaBook className="w-4 h-4" /> Laporan
-                    </Link>
                     <button onClick={handleLogout} className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                       <FaSignOutAlt className="w-4 h-4" /> Keluar
                     </button>
@@ -359,8 +377,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto pb-24 lg:pb-0">
-          {children}
+        <main className="flex-1 overflow-y-auto pb-24 lg:pb-0 scrollbar-hide">          {children}
         </main>
       </div>
       <nav className="lg:hidden fixed bottom-3 left-2 right-2 z-40 h-14 bg-[#f0f4e8] dark:bg-[#232b1c] border border-[#e5d7c4]/20 dark:border-[#354024]/30 rounded-[20px] shadow-xl px-1">

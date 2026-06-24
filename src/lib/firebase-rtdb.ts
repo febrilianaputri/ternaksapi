@@ -1,9 +1,3 @@
-// src/lib/firebase-rtdb.ts
-
-// ==========================================
-// 1. Fungsi Pembantu Utilitas & Identifikasi
-// ==========================================
-
 export function formatKandangLabel(kandang: string): string {
   if (kandang === "KoloniBesar") return "Koloni Besar";
   if (kandang === "KandangDara") return "Kandang Dara";
@@ -55,6 +49,66 @@ export type CattleSensorData = {
   latestReading: CattleSensorReading;
   historicalReadings: CattleSensorReading[];
 };
+
+export type HealthAlert = {
+  id: string;
+  type: "danger" | "warning";
+  title: string;
+  message: string;
+  time: string;
+  read: boolean;
+  cattleId: string;
+  cattleName: string;
+  eartag: string;
+  temperature: number;
+  healthStatus: string;
+};
+
+export function extractHealthAlerts( raw: unknown, cattleNames: Map<number, string>, cattleEartags?: Map<number, string>): HealthAlert[] {
+  const monitoring = extractMonitoringNode(raw);
+  if (!monitoring) return [];
+  const byEartag = collectSnapshots(monitoring);
+  const alerts: HealthAlert[] = [];
+  byEartag.forEach((snapshots, eartagKey) => {
+    if (snapshots.length === 0) return;
+
+    const latest = snapshots[snapshots.length - 1];
+    const idSapiAngka = sensorKeyToIdsapi(eartagKey) ?? 0;
+    const cowKey = idsapiToSensorKey(idSapiAngka);
+    const namaSapi = cattleNames.get(idSapiAngka) || `Sapi ${idSapiAngka}`;
+    const eartagFromDb = cattleEartags?.get(idSapiAngka);
+    const eartagDisplay = eartagFromDb || cowKey;
+    const healthStatus = pickString(latest.node, ["health_status", "healthStatus"]) ?? deriveHealthStatus(latest.temperature);
+    const temperature = latest.temperature;
+
+    if (healthStatus.toLowerCase() === "warning" || healthStatus.toLowerCase() === "critical") {
+      const alertType: "danger" | "warning" = healthStatus.toLowerCase() === "critical" ? "danger" : "warning";
+      let message = "";
+      if (healthStatus.toLowerCase() === "critical" || temperature > 40) {
+        message = `Suhu tubuh sangat tinggi: ${temperature.toFixed(1)}°C. Perlu penanganan segera!`;
+      } else if (healthStatus.toLowerCase() === "warning" || temperature > 39.5) {
+        message = `Suhu tubuh meningkat: ${temperature.toFixed(1)}°C. Perlu perhatian.`;
+      } else {
+        message = `Kondisi kesehatan ${healthStatus}. Suhu: ${temperature.toFixed(1)}°C`;
+      }
+
+      alerts.push({
+        id: `alert-${eartagKey}-${Date.now()}`,
+        type: alertType,
+        title: namaSapi,
+        message: message,
+        time: formatLastUpdate(latest.timestamp),
+        read: false,
+        cattleId: cowKey,
+        cattleName: namaSapi,
+        eartag: eartagDisplay,
+        temperature,
+        healthStatus,
+      });
+    }
+  });
+  return alerts;
+}
 
 type RawSensorNode = Record<string, unknown>;
 
@@ -303,7 +357,6 @@ function collectSnapshots(
         byEartag.set(eartagKey, snapshots);
       }
     });
-
     return byEartag;
   }
 
@@ -425,10 +478,6 @@ function snapshotToCattleReading(snapshot: Snapshot): CattleSensorReading {
   };
 }
 
-// ==========================================
-// 2. Core Parser: Normalisasi Data Firebase
-// ==========================================
-
 export function normalizeDataSensor(
   raw: unknown,
   cattleNames: Map<number, string>,
@@ -489,12 +538,8 @@ export function normalizeDataSensor(
     }
   });
 
-  const tempHistory = Array.from(historyBuckets.values())
-    .sort((a, b) => String(a.label).localeCompare(String(b.label)))
-    .slice(-32);
-
+  const tempHistory = Array.from(historyBuckets.values()).sort((a, b) => String(a.label).localeCompare(String(b.label))).slice(-32);
   sensors.sort((a, b) => a.cattleId.localeCompare(b.cattleId));
-
   return { sensors, tempHistory };
 }
 
@@ -543,13 +588,9 @@ export function buildFallbackSensors(
   });
 }
 
-// ==========================================
-// 3. Jembatan URL & Fetching REST API
-// ==========================================
 
 function normalizeRtdbBaseUrl(url: string): string {
   let base = url.replace(/^["']|["']$/g, "").replace(/\/$/, "");
-
   if (/\.firebaseio\.com$/i.test(base)) {
     const projectMatch = /https:\/\/([^.]+)(?:-default-rtdb)?\.firebaseio\.com/i.exec(
       base
@@ -612,7 +653,8 @@ export async function fetchDataSensorFromRtdb(): Promise<unknown | null> {
 
 export async function fetchDataSensorFromRtdbDetailed(): Promise<RtdbFetchResult> {
   const base = getRtdbUrl();
-  const candidates = ["/monitoring.json", "/.json", "/dataSensor.json"];
+  // Only try monitoring.json - your data is there
+  const candidates = ["/monitoring.json"];
   let lastError: string | null = null;
 
   for (const path of candidates) {
@@ -644,11 +686,11 @@ export async function fetchDataSensorFromRtdbDetailed(): Promise<RtdbFetchResult
     }
   }
 
-  if (lastError?.includes("401") && !getRtdbAuthQuery()) {
+  if (lastError?.includes("401")) {
     return {
       data: null,
       error:
-        "Firebase RTDB menolak akses (401). Tambahkan FIREBASE_DATABASE_SECRET di .env atau izinkan read pada node monitoring di Firebase Rules.",
+        "Firebase RTDB 401 Permission denied. Cek Firebase Console → Realtime Database → Rules: pastikan ada rule untuk allow read.",
       path: null,
     };
   }

@@ -53,19 +53,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/** Buat atau sinkronkan akun demo ke tabel pengguna. */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const {
-      uid,
-      firebase_uid,
-      name,
-      email,
-      role,
-      image = "",
-      alamat = "",
-    } = body as {
+    const { uid, firebase_uid, name,email, role, image = "", alamat = ""} = body as {
       uid: string;
       firebase_uid: string;
       name: string;

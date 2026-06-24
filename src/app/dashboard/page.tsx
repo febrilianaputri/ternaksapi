@@ -2,16 +2,17 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { FaBalanceScale, FaChevronRight, FaArrowRight, FaHeartbeat, FaExclamationTriangle, FaExclamationCircle,FaInfoCircle, FaCheckCircle,FaDownload,FaSpinner} from "react-icons/fa";
+import { FaBalanceScale, FaChevronRight, FaArrowRight, FaHeartbeat, FaExclamationTriangle, FaExclamationCircle, FaInfoCircle, FaCheckCircle, FaDownload, FaSpinner } from "react-icons/fa";
 import { FaArrowUp, FaArrowDown } from "react-icons/fa";
 import { GiCow } from "react-icons/gi";
-import {  XAxis,  YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend} from "recharts";
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from "recharts";
 import { toast } from "sonner";
 import { useSensors } from "@/hooks/useSensors";
 import { getChartColor, type DashboardData, type DashboardAlert } from "@/lib/dashboard";
 import { alertColors, dashboardStatusStyle, healthProgressColors } from "@/lib/styles";
+import { extractHealthAlerts, fetchDataSensorFromRtdb, type HealthAlert } from "@/lib/firebase-rtdb";
 
-function StatCard({title, value, sub,icon: Icon,iconBg,trend,link}: {
+function StatCard({ title, value, sub, icon: Icon, iconBg, trend, link }: {
   title: string;
   value: string;
   sub: string;
@@ -59,7 +60,7 @@ function StatCard({title, value, sub,icon: Icon,iconBg,trend,link}: {
   );
 }
 
-function AlertItem({ alert }: { alert: DashboardAlert }) {
+function AlertItem({ alert, eartag }: { alert: DashboardAlert; eartag?: string }) {
   const icons = {
     danger: FaExclamationTriangle,
     warning: FaExclamationCircle,
@@ -72,9 +73,16 @@ function AlertItem({ alert }: { alert: DashboardAlert }) {
     <div className={`flex gap-3 p-3 rounded-xl border ${alertColors[alert.type] || alertColors.info}`}>
       <Icon className="w-5 h-5 shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-stone-800 dark:text-stone-200 truncate">
-          {alert.title}
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-medium text-stone-800 dark:text-stone-200 truncate">
+            {alert.title}
+          </p>
+          {eartag && (
+            <span className="text-xs px-2 py-0.5 bg-stone-200 dark:bg-stone-700 rounded-full text-stone-600 dark:text-stone-300 shrink-0">
+              {eartag}
+            </span>
+          )}
+        </div>
         <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 leading-relaxed">
           {alert.message}
         </p>
@@ -87,15 +95,24 @@ function AlertItem({ alert }: { alert: DashboardAlert }) {
   );
 }
 
+function healthAlertToDashboardAlert(alert: HealthAlert): DashboardAlert & { eartag?: string } {
+  return {
+    id: alert.id,
+    type: alert.type,
+    title: alert.title,
+    message: alert.message,
+    time: alert.time,
+    read: alert.read,
+    eartag: alert.eartag,
+  };
+}
+
 export default function MainDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
+  const [firebaseAlerts, setFirebaseAlerts] = useState<HealthAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const {
-    tempHistory: sensorHistory,
-    cowNames: sensorCowNames,
-  } = useSensors(10000);
+  const { tempHistory: sensorHistory, cowNames: sensorCowNames, cowEartags: sensorCowEartags } = useSensors(10000);
 
   useEffect(() => {
     let cancelled = false;
@@ -119,21 +136,45 @@ export default function MainDashboard() {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const raw = await fetchDataSensorFromRtdb();
+        if (cancelled || !raw) return;
+        const cattleNames = new Map<number, string>();
+        Object.entries(sensorCowNames).forEach(([key, name]) => {
+          const match = key.match(/\d+/);
+          if (match) {
+            cattleNames.set(parseInt(match[0], 10), name);
+          }
+        });
+        const cattleEartags = new Map<number, string>();
+        Object.entries(sensorCowEartags).forEach(([key, eartag]) => {
+          const match = key.match(/\d+/);
+          if (match) {
+            cattleEartags.set(parseInt(match[0], 10), eartag);
+          }
+        });
+
+        const alerts = extractHealthAlerts(raw, cattleNames, cattleEartags);
+        if (!cancelled) setFirebaseAlerts(alerts);
+      } catch (e) {
+        console.warn("Gagal memuat alert dari Firebase:", e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [sensorCowNames, sensorCowEartags]);
+
   const handleExport = () => {
     if (!data?.cattle.length) {
       toast.error("Tidak ada data untuk diekspor");
       return;
     }
     const csvContent = [
-      [
-        "ID Sapi",
-        "Jenis",
-        "Kelamin",
-        "Status Kesehatan",
-        "Reproduksi",
-        "Bobot Akhir (kg)",
-        "Pemeriksaan Terakhir",
-      ],
+      ["ID Sapi", "Jenis", "Kelamin", "Status Kesehatan", "Reproduksi", "Bobot Akhir (kg)", "Pemeriksaan Terakhir"],
       ...data.cattle.map((c) => [
         c.idsapi,
         c.jenis_sapi,
@@ -143,9 +184,7 @@ export default function MainDashboard() {
         c.bb_akhir ?? "",
         new Date(c.periksaUpdate).toLocaleString("id-ID"),
       ]),
-    ]
-      .map((row) => row.join(","))
-      .join("\n");
+    ].map((row) => row.join(",")).join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
@@ -174,11 +213,9 @@ export default function MainDashboard() {
     );
   }
 
-  const { stats, cattle, alerts } = data;
+  const { stats, cattle } = data;
   const total = stats.totalSapi || 1;
-  const needsAction = stats.sick;
-  const unreadAlerts = alerts.filter((a) => !a.read).length;
-
+  const needsAction = firebaseAlerts.length;
   const chartSeriesKeys = sensorHistory.length > 0
     ? Object.keys(sensorHistory[0]).filter((key) => key !== "label")
     : [];
@@ -189,12 +226,9 @@ export default function MainDashboard() {
         <p className="text-sm text-stone-500 dark:text-stone-400">
           Dashboard peternakan T-Cow°
         </p>
-        <button
-          onClick={handleExport}
-          className="flex items-center gap-2 px-4 py-2 border border-stone-300 dark:border-stone-600 rounded-lg bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors text-sm"
-        >
-          <FaDownload className="w-4 h-4" />
-          Ekspor Data
+        <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 border border-stone-300 dark:border-stone-600 rounded-full bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors text-sm">
+          <FaDownload className="w-3 h-3" />
+          <span className="hidden lg:block">Ekspor Data</span>
         </button>
       </div>
 
@@ -204,31 +238,34 @@ export default function MainDashboard() {
           value={`${stats.totalSapi} Ekor`}
           sub={`${stats.healthy} sehat · ${stats.sick} sakit · ${stats.dead} mati`}
           icon={GiCow}
-          iconBg="bg-[#cfbb99]/50 dark:bg-[#cfbb99]/20 text-[#354024] dark:text-[#cfbb99]"
+          iconBg="bg-[#cfbb99]/50 dark:bg-[#cfbb99]/20 text-[#354024] dark:text-[#889063]"
           trend="neutral"
-          link="/dashboard/cattle"/>
+          link="/dashboard/cattle"
+        />
         <StatCard
           title="Data Timbangan"
           value={`${stats.totalFisik} Catatan`}
           sub=""
           icon={FaHeartbeat}
-          iconBg="bg-[#cfbb99]/50 dark:bg-[#cfbb99]/20 text-[#354024] dark:text-[#889063]" //bg-[#889063]/30
+          iconBg="bg-[#cfbb99]/50 dark:bg-[#cfbb99]/20 text-[#354024] dark:text-[#889063]"
           trend="neutral"
-          link="/dashboard/cattle"/>
+          link="/dashboard/cattle"
+        />
         <StatCard
           title="Bobot Rata-rata"
           value={stats.avgWeight !== null ? `${stats.avgWeight} kg` : "—"}
           sub="Rata-rata Berat badan sapi"
           icon={FaBalanceScale}
-          iconBg="bg-[#cfbb99]/50 dark:bg-[#cfbb99]/20 text-[#354024] dark:text-[#54cd19]"
+          iconBg="bg-[#cfbb99]/50 dark:bg-[#cfbb99]/20 text-[#354024] dark:text-[#889063]"
           trend="neutral"
-          link="/dashboard/cattle"/>
+          link="/dashboard/cattle"
+        />
         <StatCard
           title="Perlu Tindakan"
           value={`${needsAction} Sapi`}
-          sub={needsAction > 0 ? "Sedang sakit dan darurat" : "Semua sapi aman"}
+          sub={needsAction > 0 ? "Ada indikasi sensor tidak normal" : "Semua sapi aman"}
           icon={FaExclamationTriangle}
-          iconBg={needsAction > 0 ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400" : "bg-[#cfbb99]/50 dark:bg-[#cfbb99]/20 text-stone-600 dark:text-stone-400"}
+          iconBg={needsAction > 0 ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400" : "bg-[#cfbb99]/50 dark:bg-[#cfbb99]/20 text-[#354024] dark:text-[#889063]"}
           trend={needsAction > 0 ? "down" : "neutral"}
           link="/dashboard/cattle"
         />
@@ -269,11 +306,10 @@ export default function MainDashboard() {
               <FaSpinner className="w-6 h-6 animate-spin mb-2 text-[#54cd19]" />
             </div>
           )}
-
         </div>
-
+        
         <div className="bg-white dark:bg-[#232b1c] rounded-2xl border border-[#e5d7c4]/20 dark:border-[#354024]/30 p-5">
-          <h3 className="font-semibold text-[#354024] dark:text-[#e5d7c4]  mb-4">Informasi Kesehatan Sapi</h3>
+          <h3 className="font-semibold text-[#354024] dark:text-[#e5d7c4] mb-4">Informasi Kesehatan Sapi</h3>
           <div className="space-y-3 text-sm">
             {[
               { label: "Sehat", count: stats.healthy, color: healthProgressColors.Sehat },
@@ -296,12 +332,11 @@ export default function MainDashboard() {
               </div>
             ))}
           </div>
-
           <div className="mt-5 pt-4 border-t border-[#e5d7c4]/20 dark:border-[#354024]/30">
             <h4 className="text-xs font-medium text-stone-500 dark:text-[#cfbb99] tracking-wide mb-3">
               Timbangan sapi
             </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-48 overflow-y-auto custom-scrollbar">
+            <div className="grid grid-cols-1 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-2 2xl:grid-cols-3 gap-2 scrollbar-hide custom-scrollbar">
             {cattle.length === 0 ? (
               <p className="text-xs text-stone-500">Tidak ada data sapi aktif.</p>
             ) : (cattle.map((c: any) => (
@@ -321,23 +356,26 @@ export default function MainDashboard() {
       <div className="bg-white dark:bg-[#232b1c] rounded-2xl border border-[#e5d7c4]/20 dark:border-[#354024]/30 p-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-[#354024] dark:text-[#e5d7c4]">
-            Alert Kesehatan Sapi Hidup
+            Notifikasi Kesehatan Sapi Hidup
           </h3>
-          {unreadAlerts > 0 && (
+          {firebaseAlerts.length > 0 && (
             <span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full font-semibold animate-pulse">
-              {unreadAlerts} Baru
+              {firebaseAlerts.length} Notifikasi
             </span>
           )}
         </div>
-        
-        {alerts.length === 0 ? (
-          <p className="text-sm text-stone-500 dark:text-stone-400 py-4 text-center border border-dashed rounded-xl border-stone-200 dark:border-stone-700">
-            Semua parameter eartag IoT terpantau normal. Sapi dalam kondisi sehat.
-          </p>
+
+        {firebaseAlerts.length === 0 ? (
+          <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-6 text-center">
+            <FaCheckCircle className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
+            <p className="font-medium text-emerald-700 dark:text-emerald-300">
+              Semua Sapi Sehat
+            </p>
+          </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {alerts.slice(0, 4).map((alert) => (
-              <AlertItem key={alert.id} alert={alert} />
+            {firebaseAlerts.slice(0, 4).map((alert) => (
+              <AlertItem key={alert.id} alert={healthAlertToDashboardAlert(alert)} eartag={alert.eartag} />
             ))}
           </div>
         )}

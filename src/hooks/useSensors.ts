@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { DashboardAlert } from "@/lib/dashboard";
-import type { SensorReading, TempHistoryPoint } from "@/lib/firebase-rtdb";
+import type { SensorReading, TempHistoryPoint, HealthAlert } from "@/lib/firebase-rtdb";
 
 type SensorsPayload = {
   sensors: SensorReading[];
   tempHistory: TempHistoryPoint[];
   alerts: DashboardAlert[];
   cowNames: Record<string, string>;
+  cowEartags: Record<string, string>;
   updatedAt: string;
   source?: string;
   fetchError?: string | null;
@@ -19,6 +20,7 @@ const empty: SensorsPayload = {
   tempHistory: [],
   alerts: [],
   cowNames: {},
+  cowEartags: {},
   updatedAt: "",
 };
 

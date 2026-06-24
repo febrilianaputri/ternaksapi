@@ -235,24 +235,24 @@ export default function CattleListPage() {
   return (
     <div className="p-6">
       <div className="mb-6 flex flex-col gap-1 sm:gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <div className="flex flex-wrap justify-between">
-            <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-100"> Manajemen Sapi </h1>
-            <div className="flex flex-wrap items-center gap-2">
-              <button type="button" onClick={handleExport} className="inline-flex items-center gap-2 rounded-2xl border border-stone-200 bg-white px-4 py-2 text-sm font-medium text-stone-700 transition hover:border-[#54cd19] hover:bg-[#e7f6d7] dark:border-stone-800 dark:bg-stone-950 dark:text-stone-200">
-                <FaDownload className="h-3 w-3 " />
-                <p className="hidden lg:block">Export data</p>
-              </button>
-              <button type="button" onClick={openCreateModal} className="inline-flex items-center gap-2 rounded-2xl bg-[#54cd19] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#47b117]">
-                <FaPlus className="h-3 w-3" />
-                <p className="hidden lg:block">Tambah sapi</p>
-              </button>
-            </div>
+      <div className="w-full">
+        <div className="flex w-full flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-100">Manajemen Sapi</h1>
+            <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">Mengelola data setiap sapi yang ada dalam peternakan T-Cow°.</p>
           </div>
-          <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-            Mengelola data setiap sapi yang ada dalam peternakan T-Cow°.
-          </p>
+          <div className="flex items-center gap-2">
+            <button type="button"  onClick={handleExport} className="inline-flex items-center gap-2 rounded-2xl border border-stone-200 bg-white px-4 py-2 text-sm font-medium text-stone-700 transition hover:border-[#54cd19] hover:bg-[#e7f6d7] dark:border-stone-800 dark:bg-stone-950 dark:text-stone-200">
+              <FaDownload className="h-3 w-3" />
+              <p className="hidden lg:block">Export data</p>
+            </button>
+            <button type="button" onClick={openCreateModal} className="inline-flex items-center gap-2 rounded-2xl bg-[#54cd19] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#47b117]">
+              <FaPlus className="h-3 w-3" />
+              <p className="hidden lg:block">Tambah sapi</p>
+            </button>
+          </div>
         </div>
+      </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
