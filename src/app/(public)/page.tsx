@@ -7,7 +7,6 @@ import {
   FaBrain, FaSyringe, FaStar, FaCheckCircle,
 } from "react-icons/fa";
 
-/* ── Images ─────────────────────────────────────────────────── */
 const IMG = {
   hero:        "https://images.unsplash.com/photo-1680723341624-f38fcfe4f693?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYXR0bGUlMjBmYXJtJTIwd2lkZSUyMGdyZWVuJTIwbGFuZHNjYXBlJTIwSW5kb25lc2lhfGVufDF8fHx8MTc3NzEwNTAwNXww&ixlib=rb-4.1.0&q=80&w=1080",
   farmer:      "https://images.unsplash.com/photo-1642439994493-3816a23c997a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmYXJtZXIlMjB1c2luZyUyMHRhYmxldCUyMHNtYXJ0JTIwYWdyaWN1bHR1cmUlMjBmaWVsZHxlbnwxfHx8MTc3NzEwNTAwNXww&ixlib=rb-4.1.0&q=80&w=1080",
@@ -21,24 +20,20 @@ const IMG = {
   womanFarmer: "https://images.unsplash.com/photo-1628423098951-8650fe174ca4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b21hbiUyMGZhcm1lciUyMHNtaWxpbmclMjBhZ3JpY3VsdHVyZSUyMG1vcm5hbmdkc2NhcGV8ZW58MXx8fHwxNzc3MTA0MDgwfDA&ixlib=rb-4.1.0&q=80&w=1080",
 };
 
-/* ── Services data ───────────────────────────────────────────── */
 const services = [
   { img: IMG.sensor,  title: "IoT Tracking",       sub: "Sensor wearable real-time" },
   { img: IMG.vet,     title: "Health Analytics",    sub: "Analisis kesehatan berbasis data" },
   { img: IMG.herd,    title: "Cattle Management",   sub: "Kelola koloni & individu" },
 ];
 
-/* ── Featured solutions ─────────────────────────────────────── */
 const solutions = [
   { num: "01", title: "Temperature Monitoring",  desc: "Sensor wearable yang dapat merekam suhu tubuh sapi serta deteksi dini demam & penyakit." },
   { num: "02", title: "Behavior Log", desc: "Catat perubahan perilaku harian sapi untuk analisis tren kesehatan jangka panjang." },
   { num: "03", title: "Automated Health Alerts", desc: "Peringatan otomatis saat suhu sapi melampaui ambang normal 38–39.5 °C." },
 ];
 
-/* ── Gallery images ─────────────────────────────────────────── */
 const gallery = [IMG.herd, IMG.vet, IMG.sensor, IMG.barn, IMG.cow, IMG.sunrise];
 
-/* ── Health metric cards (mini dashboard mockup) ────────────────────── */
 const metrics = [
   { icon: FaThermometerHalf, label: "Suhu Tubuh",   val: "38.6°C",    norm: "Normal" },
   { icon: FaHeartbeat,    label: "Aktivitas",     val: "Aktif",     norm: "6.200 langkah" },
@@ -48,10 +43,6 @@ const metrics = [
 export default function HomePage() {
   return (
     <div className="landing-page">
-
-      {/* ══════════════════════════════════════════════════════════════
-          1. HERO
-          ══════════════════════════════════════════════════════════════ */}
       <section className="relative min-h-screen flex flex-col overflow-hidden">
         <div className="absolute inset-0">
           <img src={IMG.hero} alt="Farm" className="w-full h-full object-cover" />
@@ -101,14 +92,13 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Image side */}
             <div className="relative hidden lg:flex justify-center">
               <div className="relative w-72 h-72 rounded-full overflow-hidden border-4 border-brand-accent/30 shadow-2xl">
                 <img src={IMG.farmer} alt="Smart farming" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-linear-to-t from-brand-forest/30 to-transparent" />
               </div>
               <div className="absolute -bottom-4 -left-8 bg-white dark:bg-stone-900 rounded-2xl shadow-2xl p-4 w-52 border border-stone-100 dark:border-stone-700">
-                <p className="text-xs text-stone-600 dark:text-stone-400 mb-2 font-medium">🐄 Monitoring Sapi</p>
+                <p className="text-xs text-stone-600 dark:text-stone-400 mb-2 font-medium">Monitoring Sapi</p>
                 <div className="space-y-2">
                   {metrics.map((m) => (
                     <div key={m.label} className="flex items-center gap-2 rounded-lg px-2 py-1.5 bg-stone-100 dark:bg-stone-950 border border-stone-200 dark:border-stone-700">
@@ -140,9 +130,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════
-          2. ABOUT SECTION
-          ══════════════════════════════════════════════════════════════ */}
       <section className="py-24 landing-page">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
@@ -184,9 +171,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ════════════════════════════════════════════════════════════
-          3. SERVICES & SOLUTIONS
-          ════════════════════════════════════════════════════════════ */}
       <section className="py-24 landing-section-alt">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="mb-12">
@@ -233,9 +217,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ════════════════════════════════════════════════════════════
-          4. FEATURED SOLUTIONS
-          ════════════════════════════════════════════════════════════ */}
       <section className="py-24 landing-page">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
@@ -295,9 +276,6 @@ export default function HomePage() {
 
       </section>
 
-      {/* ════════════════════════════════════════════════════════════
-          5. HEALTH MONITORING — metrics showcase
-          ══════════════════════════════════════════════════════════════ */}
       <section className="py-24 landing-gradient-panel relative overflow-hidden">
         <div className="absolute inset-0 opacity-5">
           <img src={IMG.sunrise} alt="" className="w-full h-full object-cover" />
@@ -334,7 +312,7 @@ export default function HomePage() {
           </div>
 
           <div className="bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-700 rounded-2xl p-6 max-w-2xl mx-auto shadow-lg">
-            <p className="text-stone-800 dark:text-stone-100 text-sm font-medium mb-4">📊 Tren Suhu Tubuh — (7 hari terakhir)</p>
+            <p className="text-stone-800 dark:text-stone-100 text-sm font-medium mb-4">Tren Suhu Tubuh (7 hari terakhir)</p>
             <div className="flex items-end gap-2 h-20">
               {[68, 72, 75, 88, 78, 74, 76].map((h, i) => (
                 <div key={i} className="flex-1 flex flex-col items-center gap-1">
@@ -353,9 +331,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════
-          6. FARM GALLERY
-          ══════════════════════════════════════════════════════════════ */}
       <section className="py-24 landing-page">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="flex items-end justify-between mb-10">
@@ -380,9 +355,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ════════════════════════════════════════════════════════════════
-          7. CTA FINAL
-          ════════════════════════════════════════════════════════════════ */}
       <section className="py-20 landing-section-dark">
         <div className="max-w-4xl mx-auto px-6 lg:px-12 text-center">
           <span className="text-brand-accent text-sm font-medium uppercase tracking-widest">Mulai Sekarang</span>

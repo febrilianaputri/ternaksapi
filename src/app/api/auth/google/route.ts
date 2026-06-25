@@ -1,18 +1,31 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyRegistrationKode } from "@/lib/auth";
-import {
-  hashRandomPassword,
-  isGoogleAuthServerConfigured,
-  verifyFirebaseIdToken,
-} from "@/lib/google-auth";
+import { hashRandomPassword, isGoogleAuthServerConfigured, verifyFirebaseIdToken} from "@/lib/google-auth";
 import { generateUid, serializePengguna } from "@/lib/pengguna";
-import { jsonError, jsonOk } from "@/lib/api-response";
+import { generateToken, AUTH_COOKIE_OPTIONS } from "@/lib/jwt";
+
+async function setAuthCookie(response: NextResponse, user: { uid: string; email: string; role: string }): Promise<NextResponse> {
+  const token = await generateToken(user.uid, user.email, user.role);
+  response.cookies.set({
+    name: AUTH_COOKIE_OPTIONS.name,
+    value: token,
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 24 * 60 * 60,
+  });
+  return response;
+}
 
 export async function POST(request: NextRequest) {
   try {
     if (!isGoogleAuthServerConfigured()) {
-      return jsonError("Google Auth belum dikonfigurasi di server.", 503);
+      return NextResponse.json(
+        { error: "Google Auth belum dikonfigurasi di server." },
+        { status: 503 }
+      );
     }
 
     const body = await request.json();
@@ -22,39 +35,54 @@ export async function POST(request: NextRequest) {
     };
 
     if (!idToken?.trim()) {
-      return jsonError("Token Google tidak valid", 400);
+      return NextResponse.json(
+        { error: "Token Google tidak valid" },
+        { status: 400 }
+      );
     }
 
     const googleUser = await verifyFirebaseIdToken(idToken.trim());
     if (!googleUser) {
-      return jsonError("Token Google kedaluwarsa atau tidak valid", 401);
+      return NextResponse.json(
+        { error: "Token Google kedaluwarsa atau tidak valid" },
+        { status: 401 }
+      );
     }
 
     if (!googleUser.emailVerified) {
-      return jsonError("Email Google belum terverifikasi", 403);
+      return NextResponse.json(
+        { error: "Email Google belum terverifikasi" },
+        { status: 403 }
+      );
     }
 
     const isRegister = Boolean(no_kode?.trim());
 
     if (isRegister) {
       if (!verifyRegistrationKode(no_kode!)) {
-        return jsonError("No kode farm tidak valid", 403);
+        return NextResponse.json(
+          { error: "No kode farm tidak valid" },
+          { status: 403 }
+        );
       }
 
       const existingByFirebase = await prisma.pengguna.findUnique({
         where: { firebase_uid: googleUser.firebaseUid },
       });
       if (existingByFirebase) {
-        return jsonError("Akun Google ini sudah terdaftar", 409);
+        return NextResponse.json(
+          { error: "Akun Google ini sudah terdaftar" },
+          { status: 409 }
+        );
       }
 
       const existingByEmail = await prisma.pengguna.findUnique({
         where: { email: googleUser.email },
       });
       if (existingByEmail) {
-        return jsonError(
-          "Email sudah terdaftar. Gunakan masuk dengan Google atau email/password.",
-          409
+        return NextResponse.json(
+          { error: "Email sudah terdaftar. Gunakan masuk dengan Google atau email/password." },
+          { status: 409 }
         );
       }
 
@@ -75,7 +103,8 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      return jsonOk(serializePengguna(created) as Record<string, unknown>);
+      const response = NextResponse.json(serializePengguna(created));
+      return setAuthCookie(response, created);
     }
 
     let pengguna = await prisma.pengguna.findUnique({
@@ -89,9 +118,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (!pengguna) {
-      return jsonError(
-        "Akun belum terdaftar. Daftar terlebih dahulu dengan no kode farm.",
-        404
+      return NextResponse.json(
+        { error: "Akun belum terdaftar. Daftar terlebih dahulu dengan no kode farm." },
+        { status: 404 }
       );
     }
 
@@ -105,9 +134,13 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return jsonOk(serializePengguna(updated) as Record<string, unknown>);
+    const response = NextResponse.json(serializePengguna(updated));
+    return setAuthCookie(response, updated);
   } catch (error) {
     console.error("[POST /api/auth/google]", error);
-    return jsonError("Gagal masuk dengan Google", 500);
+    return NextResponse.json(
+      { error: "Gagal masuk dengan Google" },
+      { status: 500 }
+    );
   }
 }

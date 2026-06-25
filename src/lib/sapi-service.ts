@@ -683,7 +683,6 @@ export async function deleteActivity(
   return true;
 }
 
-// Tipe data untuk export lengkap
 export type FullExportData = {
   exportDate: string;
   summary: {
@@ -725,9 +724,6 @@ export type FullExportData = {
   }>;
 };
 
-/**
- * Mengambil semua data untuk export lengkap (sapi, informasi_fisik, riwayat_medis, riwayat_reproduksi)
- */
 export async function buildFullExportData(): Promise<FullExportData> {
   const [sapiList, informasiFisikList, riwayatMedisList, riwayatReproduksiList] = await Promise.all([
     prisma.sapi.findMany({ orderBy: { idsapi: "asc" } }),

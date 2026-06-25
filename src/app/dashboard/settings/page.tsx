@@ -146,7 +146,7 @@ export default function SettingsPage() {
       /\.jpe?g$/i.test(file.name);
 
     if (!isJpeg) {
-      toast.error("Hanya file JPG/JPEG yang diperizinkan");
+      toast.error("Hanya file JPG/JPEG yang diperbolehkan");
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
@@ -169,7 +169,7 @@ export default function SettingsPage() {
     const body = new FormData();
     body.append("file", file);
     body.append("uid", uid);
-    const res = await fetch("/api/upload/avatar", { method: "POST", body });
+    const res = await fetch("/api/upload/avatar", { method: "POST", credentials: "include", body });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(
@@ -342,7 +342,6 @@ export default function SettingsPage() {
                       onChange={handleImageSelect}
                     />
                     {(imagePreview || formData.image) ? (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={imagePreview || formData.image}
                         alt={formData.name}
@@ -503,9 +502,9 @@ export default function SettingsPage() {
                       Tips Keamanan
                     </h4>
                     <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-                      <li>• Gunakan password yang kuat dan unik</li>
-                      <li>• Jangan bagikan password Anda kepada siapa pun</li>
-                      <li>• Ganti password secara berkala</li>
+                      <li>Gunakan password yang kuat dan unik</li>
+                      <li>Jangan bagikan password Anda kepada siapa pun</li>
+                      <li>Ganti password secara berkala</li>
                     </ul>
                   </div>
                 </div>

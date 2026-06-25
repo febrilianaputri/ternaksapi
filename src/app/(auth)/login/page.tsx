@@ -30,15 +30,6 @@ export default function LoginPage() {
     if (!isValidEmailFormat(email)) return setError(MSG.emailInvalid);
 
     setLoading(true);
-    const success = await login(email, password);
-    setLoading(false);
-
-    if (success) {
-      toast.success("Selamat datang kembali.");
-      router.push("/dashboard");
-    } else {
-      setError("Email atau password salah. Coba lagi.");
-    }
   };
 
   return (
@@ -59,8 +50,8 @@ export default function LoginPage() {
           <input
             id="login-email"
             type="email"
-            autoComplete="email"
             value={email}
+            autoComplete="off"
             onChange={(e) => setEmail(e.target.value)}
             placeholder="nama@email.com"
             className={inputClass}
@@ -75,7 +66,7 @@ export default function LoginPage() {
             <input
               id="login-password"
               type={showPassword ? "text" : "password"}
-              autoComplete="current-password"
+              autoComplete="off"
               value={password}
               placeholder="••••••••"
               onChange={(e) => setPassword(e.target.value)}

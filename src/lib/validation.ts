@@ -4,8 +4,7 @@ export const MSG = {
   emailRequired: "Email wajib diisi.",
   emailInvalid: "Format email tidak valid.",
   passwordRequired: "Password wajib diisi.",
-  passwordInvalid:
-    "Password harus memuat huruf besar, huruf kecil, angka, dan karakter khusus (min. 5 karakter).",
+  passwordInvalid: "Password harus memuat huruf besar, huruf kecil, angka, dan karakter khusus (min. 5 karakter).",
   passwordMismatch: "Konfirmasi password tidak cocok.",
   networkError: "Gagal menghubungi server",
 } as const;
@@ -45,7 +44,7 @@ export function validatePassword(password: string): string | null {
   const failed = checks.find((c) => !c.valid);
   if (!failed) return null;
 
-  if (failed.label === "Minimal 5 karakter") return "Password minimal 5 karakter.";
+  if (failed.label === "Minimal 8 karakter") return "Password minimal 8 karakter.";
   if (failed.label === "Satu huruf kecil") return "Password harus mengandung huruf kecil.";
   if (failed.label === "Satu huruf besar") return "Password harus mengandung huruf besar.";
   if (failed.label === "Satu angka") return "Password harus mengandung angka.";

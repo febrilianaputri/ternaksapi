@@ -1,8 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { buildSapiBundle, buildFullExportData, createCattle } from "@/lib/sapi-service";
 import type { CattleInput } from "@/lib/sapi";
+import { getAuthUser } from "@/lib/auth-guard";
 
 export async function GET(request: Request) {
+  const req = request as NextRequest;
+  const user = getAuthUser(req);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const exportAll = searchParams.get("export");
@@ -24,6 +31,12 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const req = request as NextRequest;
+  const user = getAuthUser(req);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const body = (await request.json()) as CattleInput;
 

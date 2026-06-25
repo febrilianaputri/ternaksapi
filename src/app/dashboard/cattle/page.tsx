@@ -1,13 +1,14 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { FaSpinner, FaExclamationTriangle, FaPlus, FaDownload, FaTrash} from "react-icons/fa";
+import { FaSpinner, FaExclamationTriangle, FaPlus, FaDownload, FaTrash, FaEye} from "react-icons/fa";
 import { toast } from "sonner";
 import Modal from "@/components/ui/Modal";
 import type { CattleInput, CattleListItem } from "@/lib/sapi";
 import { formatKandangLabel } from "@/lib/sapi";
 import { cattleHealthColors, inputClassName } from "@/lib/styles";
+import { useReadOnly } from "@/context/ReadOnlyContext";
 
 type CattleForm = {
   name: string;
@@ -33,7 +34,6 @@ const emptyForm = (): CattleForm => ({
   eartag: "",
 });
 
-// Tanggal hari ini untuk membatasi input date
 const today = new Date().toISOString().split("T")[0];
 
 function formToPayload(form: CattleForm): CattleInput {
@@ -52,6 +52,7 @@ function formToPayload(form: CattleForm): CattleInput {
 }
 
 export default function CattleListPage() {
+  const { isReadOnly } = useReadOnly();
   const [cattle, setCattle] = useState<CattleListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +63,7 @@ export default function CattleListPage() {
   const [form, setForm] = useState<CattleForm>(emptyForm);
 
   const fetchCattle = async () => {
-    const res = await fetch("/api/sapi");
+    const res = await fetch("/api/sapi", { credentials: "include" });
     if (!res.ok) throw new Error("Gagal memuat data sapi");
     const json = (await res.json()) as { cattle: CattleListItem[] };
     setCattle(json.cattle);
@@ -133,6 +134,7 @@ export default function CattleListPage() {
         const res = await fetch("/api/sapi", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify(payload),
         });
         const json = (await res.json()) as { cattle?: CattleListItem; error?: string };
@@ -239,17 +241,19 @@ export default function CattleListPage() {
         <div className="flex w-full flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-100">Manajemen Sapi</h1>
-            <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">Mengelola data setiap sapi yang ada dalam peternakan T-Cow°.</p>
+            <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">Mengelola data setiap sapi yang ada dalam peternakan T-Cow.</p>
           </div>
           <div className="flex items-center gap-2">
-            <button type="button"  onClick={handleExport} className="inline-flex items-center gap-2 rounded-2xl border border-stone-200 bg-white px-4 py-2 text-sm font-medium text-stone-700 transition hover:border-[#54cd19] hover:bg-[#e7f6d7] dark:border-stone-800 dark:bg-stone-950 dark:text-stone-200">
+            <button type="button" onClick={handleExport} className="inline-flex items-center gap-2 rounded-2xl border border-stone-200 bg-white px-4 py-2 text-sm font-medium text-stone-700 transition hover:border-[#54cd19] hover:bg-[#e7f6d7] dark:border-stone-800 dark:bg-stone-950 dark:text-stone-200">
               <FaDownload className="h-3 w-3" />
               <p className="hidden lg:block">Export data</p>
             </button>
-            <button type="button" onClick={openCreateModal} className="inline-flex items-center gap-2 rounded-2xl bg-[#54cd19] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#47b117]">
-              <FaPlus className="h-3 w-3" />
-              <p className="hidden lg:block">Tambah sapi</p>
-            </button>
+            {!isReadOnly && (
+              <button type="button" onClick={openCreateModal} className="inline-flex items-center gap-2 rounded-2xl bg-[#54cd19] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#47b117]">
+                <FaPlus className="h-3 w-3" />
+                <p className="hidden lg:block">Tambah sapi</p>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -272,7 +276,7 @@ export default function CattleListPage() {
                     {item.name}
                   </h3>
                   <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-                    {item.breed} • {formatKandangLabel(item.status)}
+                    {item.breed} {formatKandangLabel(item.status)}
                   </p>
                 </div>
                 <div className={"rounded-2xl px-3 py-1 text-sm font-medium " + (cattleHealthColors[item.health] ?? cattleHealthColors.Sehat)}>
@@ -300,14 +304,18 @@ export default function CattleListPage() {
                   <Link href={`/dashboard/cattle/${item.id}`} className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50 px-3 py-2 text-sm font-medium text-stone-700 transition hover:border-[#54cd19] hover:bg-[#e7f6d7] dark:border-stone-800 dark:bg-stone-900 dark:text-stone-200">
                     Lihat detail
                   </Link>
-                  <button type="button" onClick={() => openEditModal(item)} className="inline-flex items-center gap-2 rounded-full border border-[#54cd19] bg-[#54cd19] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#47b117]">
-                    Edit
-                  </button>
-                  <button type="button" onClick={() => setDeletingCattle(item)} className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-100 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400"
-                    >
-                    <FaTrash className="h-3.5 w-3.5" />
-                    Hapus
-                  </button>
+                  {!isReadOnly && (
+                    <>
+                      <button type="button" onClick={() => openEditModal(item)} className="inline-flex items-center gap-2 rounded-full border border-[#54cd19] bg-[#54cd19] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#47b117]">
+                        Edit
+                      </button>
+                      <button type="button" onClick={() => setDeletingCattle(item)} className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-100 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400"
+                        >
+                        <FaTrash className="h-3.5 w-3.5" />
+                        Hapus
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

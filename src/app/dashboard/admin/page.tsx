@@ -17,7 +17,6 @@ const statusStyle: Record<string, string> = {
   Nonaktif: "bg-stone-100 dark:bg-stone-700 text-stone-500 dark:text-stone-400",
 };
 
-// Tanggal hari ini untuk membatasi input date
 const today = new Date().toISOString().split("T")[0];
 
 type AdminUser = {
@@ -49,7 +48,7 @@ export default function AdminPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/api/pengguna");
+        const res = await fetch("/api/pengguna", { credentials: "include" });
         if (res.ok) {
           const json = (await res.json()) as { usersData: AdminUser[] };
           setUsersData(json.usersData ?? []);
@@ -110,11 +109,10 @@ export default function AdminPage() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-stone-800 dark:text-stone-100">
-            Teknisi & Manajemen Pengguna
+            Manajemen Pengguna
           </h2>
           <p className="text-sm text-stone-400 mt-0.5">
             Kelola akun dan hak akses pengguna sistem
@@ -124,21 +122,20 @@ export default function AdminPage() {
           <div className="flex gap-3">
             <button
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
             >
-              <FaPlus className="w-4 h-4" /> Tambah Pengguna
+              <FaPlus className="w-3 h-3" /> <span className="hidden lg:block"> Tambah Pengguna </span>
             </button>
             <button
               onClick={handleExport}
-              className="flex items-center gap-2 border border-stone-300 dark:border-stone-600 rounded-lg bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors px-4 py-2"
+              className="flex items-center gap-2 border border-stone-300 dark:border-stone-600 rounded-full bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors px-4 py-2"
             >
-              <FaDownload className="w-4 h-4" /> Ekspor
+              <FaDownload className="w-3 h-3" /> <span className="hidden lg:block"> Ekspor Data </span> 
             </button>
           </div>
         )}
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
           { label: "Total Pengguna", value: usersData.length, color: "bg-stone-50 dark:bg-stone-800 text-stone-700 dark:text-stone-300" },
@@ -152,69 +149,6 @@ export default function AdminPage() {
           </div>
         ))}
       </div>
-
-      {/* Permission levels info */}
-      <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-100 dark:border-stone-800 p-5">
-        <h3 className="font-semibold text-stone-800 dark:text-stone-200 mb-4">
-          Tingkatan Akses Pengguna
-        </h3>
-        <div className="grid sm:grid-cols-3 gap-4">
-          {[
-            {
-              role: "Admin",
-              icon: FaShieldAlt,
-              color: "bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-400",
-              perms: [
-                "Akses penuh semua modul",
-                "Manajemen pengguna",
-                "Konfigurasi sistem",
-                "Ekspor & laporan",
-              ],
-            },
-            {
-              role: "Operator",
-              icon: FaUserCheck,
-              color: "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-400",
-              perms: [
-                "Kelola data sapi",
-                "Input pakan & produksi",
-                "Maintenance sensor",
-                "Lihat laporan",
-              ],
-            },
-            {
-              role: "Viewer",
-              icon: FaEye,
-              color: "bg-stone-50 dark:bg-stone-800 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400",
-              perms: [
-                "Lihat data sapi",
-                "Lihat dashboard",
-                "Lihat laporan",
-              ],
-            },
-          ].map((role) => (
-            <div key={role.role} className={`rounded-xl p-4 ${role.color}`}>
-              <div className="flex items-center gap-3 mb-3">
-                <role.icon className="w-5 h-5" />
-                <div>
-                  <p className="font-semibold text-stone-800 dark:text-stone-200">{role.role}</p>
-                  <p className="text-xs text-stone-400">Level {role.role}</p>
-                </div>
-              </div>
-              <div className="space-y-1">
-                {role.perms.map((perm) => (
-                  <div key={perm} className="flex items-center gap-2 text-sm">
-                    <div className="w-1.5 h-1.5 rounded-full bg-current opacity-20" />
-                    <span className="text-stone-600 dark:text-stone-300">{perm}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* User Cards */}
       <div className="space-y-4">
         {filtered.length === 0 ? (
           <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-100 dark:border-stone-800 p-12 text-center">
@@ -281,7 +215,6 @@ export default function AdminPage() {
         )}
       </div>
 
-      {/* Add User Modal */}
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Tambah Pengguna Baru">
         <form onSubmit={handleAddUser} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">

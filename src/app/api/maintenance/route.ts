@@ -1,9 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { idsapiToCattleId } from "@/lib/sapi";
 import type { MaintenanceRow } from "@/lib/sapi-service";
+import { getAuthUser } from "@/lib/auth-guard";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const user = getAuthUser(request);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     let rows: MaintenanceRow[] = [];
     try {

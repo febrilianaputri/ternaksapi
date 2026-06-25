@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
+import { getAuthUser } from "@/lib/auth-guard";
 
-const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
+const MAX_SIZE = 2 * 1024 * 1024;
 
 export async function POST(request: NextRequest) {
+  const user = getAuthUser(request);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get("file");

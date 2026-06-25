@@ -118,7 +118,7 @@ export default function MainDashboard() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/dashboard");
+        const res = await fetch("/api/dashboard", { credentials: "include" });
         if (!res.ok) throw new Error("Gagal memuat dashboard");
         const json = (await res.json()) as DashboardData;
         if (!cancelled) setData(json);
@@ -224,7 +224,7 @@ export default function MainDashboard() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <p className="text-sm text-stone-500 dark:text-stone-400">
-          Dashboard peternakan T-Cow°
+          Dashboard peternakan T-Cow
         </p>
         <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 border border-stone-300 dark:border-stone-600 rounded-full bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors text-sm">
           <FaDownload className="w-3 h-3" />
@@ -236,7 +236,7 @@ export default function MainDashboard() {
         <StatCard
           title="Total Sapi"
           value={`${stats.totalSapi} Ekor`}
-          sub={`${stats.healthy} sehat · ${stats.sick} sakit · ${stats.dead} mati`}
+          sub={`${stats.healthy} sehat ${stats.sick} sakit ${stats.dead} mati`}
           icon={GiCow}
           iconBg="bg-[#cfbb99]/50 dark:bg-[#cfbb99]/20 text-[#354024] dark:text-[#889063]"
           trend="neutral"
@@ -289,13 +289,13 @@ export default function MainDashboard() {
               <LineChart data={sensorHistory} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" strokeOpacity={0.5} />
                 <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#a8a29e" }} tickLine={false} axisLine={{ stroke: "#e7e5e4" }}/>
-                <YAxis tick={{ fontSize: 10, fill: "#a8a29e" }} tickLine={false} axisLine={false} width={40} domain={[25, 45]} tickFormatter={(v) => `${v}°C`}/>
+                <YAxis tick={{ fontSize: 10, fill: "#a8a29e" }} tickLine={false} axisLine={false} width={40} domain={[25, 45]} tickFormatter={(v) => `${v}C`}/>
                 <Tooltip formatter={(value, name) => [
-                    `${value}°C`, 
+                    `${value}C`,
                     sensorCowNames[name as string] || `Eartag ${name}`
                   ]} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
-                
+
                 {chartSeriesKeys.map((key, index) => (
                   <Line key={key} type="monotone" dataKey={key} name={sensorCowNames[key] || key} stroke={getChartColor(index)} strokeWidth={2.5} dot={false} activeDot={{ r: 5 }} connectNulls/>
                 ))}
@@ -307,7 +307,7 @@ export default function MainDashboard() {
             </div>
           )}
         </div>
-        
+
         <div className="bg-white dark:bg-[#232b1c] rounded-2xl border border-[#e5d7c4]/20 dark:border-[#354024]/30 p-5">
           <h3 className="font-semibold text-[#354024] dark:text-[#e5d7c4] mb-4">Informasi Kesehatan Sapi</h3>
           <div className="space-y-3 text-sm">
@@ -317,7 +317,7 @@ export default function MainDashboard() {
               { label: "Mati", count: stats.dead, color: healthProgressColors.Mati },
             ].map((item) => (
               <div key={item.label}>
-                <div className="flex justify-end items-center mb-1.5">                  
+                <div className="flex justify-end items-center mb-1.5">
                   <span className="font-semibold text-[#3e9413] dark:text-[#e5d7c4]">
                     {item.count} ekor
                   </span>
@@ -366,11 +366,8 @@ export default function MainDashboard() {
         </div>
 
         {firebaseAlerts.length === 0 ? (
-          <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-6 text-center">
-            <FaCheckCircle className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
-            <p className="font-medium text-emerald-700 dark:text-emerald-300">
-              Semua Sapi Sehat
-            </p>
+          <div className="px-4 py-6 text-center">
+            <p className="text-xs text-stone-400 mt-1">Tidak ada notifikasi kesehatan</p>
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">

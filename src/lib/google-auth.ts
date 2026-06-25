@@ -11,7 +11,7 @@ export type VerifiedGoogleUser = {
 
 function getFirebaseApiKey(): string | null {
   return (
-    process.env.FIREBASE_APIKEY?.trim() || null
+    process.env.NEXT_PUBLIC_FIREBASE_APIKEY?.trim() || null
   );
 }
 

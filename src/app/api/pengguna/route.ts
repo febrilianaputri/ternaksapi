@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import {
-  roleToPrisma,
-  serializePengguna,
-  type AppRole,
-} from "@/lib/pengguna";
+import { roleToPrisma, serializePengguna, type AppRole} from "@/lib/pengguna";
+import { getAuthUser, requireRole } from "@/lib/auth-guard";
 
 export async function GET(request: NextRequest) {
+  const user = getAuthUser(request);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   const email = request.nextUrl.searchParams.get("email");
-
   try {
     if (!email) {
       const list = await prisma.pengguna.findMany({
@@ -54,6 +54,11 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const user = requireRole(request, ["Teknisi"]);
+  if (user instanceof NextResponse) {
+    return user;
+  }
+
   try {
     const body = await request.json();
     const { uid, firebase_uid, name,email, role, image = "", alamat = ""} = body as {

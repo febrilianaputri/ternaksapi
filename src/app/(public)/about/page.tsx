@@ -6,14 +6,12 @@ import {
   FaCheckCircle, FaBrain,
 } from "react-icons/fa";
 
-/* ── Images ─────────────────────────────────────────────────────────── */
 const IMG_WIDE   = "https://images.unsplash.com/photo-1670586751538-497f3af8af97?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYXR0bGUlMjBmYXJtJTIwd2lkZSUyMGdyZWVuJTIwbGFuZHNjYXBlJTIwSW5kb25lc2lhfGVufDF8fHx8MTc3NzEwNTAwNXww&ixlib=rb-4.1.0&q=80&w=1080";
 const IMG_SENSOR = "https://images.unsplash.com/photo-1762381650890-43b1030fc842?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb3clMjBlYXIlMjB0YWclMjBJb1QlMjB3ZWFyYWJsZSUyMHNlbnNvciUyMGNvbHNlJTIwdXB8ZW58MXx8fHwxNzc3MTA1MDA2fDA&ixlib=rb-4.1.0&q=80&w=1080";
 const IMG_TEAM   = "https://images.unsplash.com/photo-1581092336210-c892d7da9690?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhZ3JpY3VsdHVyZSUyMHRlY2hub2xvZ3klMjBpbm5vdmF0aW9uJTIwc3RhcnR1cCUyMHRlYW18ZW58MXx8fHwxNzc3MTA1MDExfDA&ixlib=rb-4.1.0&q=80&w=1080";
 const IMG_VET    = "https://images.unsplash.com/photo-1761872936268-b6aea93552a0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2ZXRlcmluYXJpYW4lMjBmYXJtZXIlMjB3b3JraW5nJTIwY2F0dGxlJTIwb3V0ZG9vcnxlbnwxfHx8fDE3NzcxMDUwMDZ8MA&ixlib=rb-4.1.0&q=80&w=1080";
 const IMG_HERD   = "https://images.unsplash.com/photo-1691886789655-0c71dbd54044?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkYWlyeSUyMGNvdyUyMGhlcmQlMjBncmVlbiUyMHBhc3R1cmV8ZW58MXx8fHwxNzc3MTA0MDczfDA&ixlib=rb-4.1.0&q=80&w=1080";
 
-/* ── Data ───────────────────────────────────────────────────────────── */
 const goals = [
   {
     icon: FaBullseye,
@@ -38,7 +36,7 @@ const goals = [
     title: "Inovasi Teknologi",
     desc: "Mengintegrasikan IoT, analitik data, dan ML untuk transformasi digital sektor peternakan.",
     accent: "bg-brand-accent/10 text-brand-accent",
-  },  
+  },
 ];
 
 const team = [
@@ -47,12 +45,9 @@ const team = [
   { name: "Faldiena Marcelita, S.T., M.Kom. & Shelvie Nidya Neyman, S.Kom, M.Si.",       role: "Dosen Pembimbing",      initials: "03", color: "from-violet-500 to-purple-600" },
 ];
 
-/* ════════════════════════════════════════════════════════════ */
 export default function AboutPage() {
   return (
     <div className="landing-page">
-
-      {/* HERO */}
       <section className="relative h-80 overflow-hidden">
         <img src={IMG_WIDE} alt="Farm landscape" className="w-full h-full object-cover" />
         <div className="absolute inset-0 landing-hero-overlay" />
@@ -70,7 +65,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* MISI & VISI */}
       <section className="py-24 landing-page">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
@@ -118,7 +112,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* STATS STRIP */}
       <section className="py-16 bg-brand-forest dark:bg-brand-forest">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center text-white">
@@ -137,7 +130,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* GOALS */}
       <section className="py-24 landing-section-alt">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="text-center mb-14">
@@ -154,7 +146,7 @@ export default function AboutPage() {
                 key={g.title}
                 className="group p-6 rounded-2xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 transition-all hover:-translate-y-1 hover:shadow-xl cursor-default"
               >
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-5 ${g.accent} ring-1 ring-current/10`}> 
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-5 ${g.accent} ring-1 ring-current/10`}>
                   <g.icon className="w-6 h-6" />
                 </div>
                 <h3 className="font-bold mb-2 text-stone-900 dark:text-stone-100">{g.title}</h3>
@@ -165,7 +157,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* TEAM */}
       <section className="py-24 landing-page">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
@@ -212,7 +203,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* CTA */}
       <section className="py-20 landing-section-dark">
         <div className="max-w-4xl mx-auto px-6 lg:px-12 text-center">
           <span className="landing-eyebrow-on-dark">Mulai Sekarang</span>

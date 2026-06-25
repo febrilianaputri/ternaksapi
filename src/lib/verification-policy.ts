@@ -1,4 +1,4 @@
-export const OTP_TTL_MS = 60 * 1000;
+export const OTP_TTL_MS = 10 * 60 * 1000;
 export const RESEND_COOLDOWN_MS = 60 * 1000;
 export const MAX_RESENDS_PER_CYCLE = 3;
 export const LOCK_DURATION_MS = 60 * 60 * 1000;

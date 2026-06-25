@@ -46,7 +46,7 @@ export default function MaintenancePage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/api/maintenance");
+        const res = await fetch("/api/maintenance", { credentials: "include" });
         if (res.ok) {
           const json = (await res.json()) as { maintenanceData: MaintenanceItem[] };
           setMaintenanceData(json.maintenanceData ?? []);
@@ -76,7 +76,7 @@ export default function MaintenancePage() {
   const doneCount = maintenanceData.filter((m) => m.status === "Selesai").length;
   const handleAddMaintenance = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Maintenance berhasil ditambahkan");
+    toast.success("Perawatan berhasil ditambahkan");
     setShowAddModal(false);
     setFormData({
       id: "",
@@ -100,9 +100,9 @@ export default function MaintenancePage() {
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `data_maintenance_${new Date().toISOString().split("T")[0]}.csv`;
+    link.download = `data_perawatan_${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
-    toast.success("Data maintenance berhasil diekspor");
+    toast.success("Data perawatan berhasil diekspor");
   };
 
   if (loading) {
@@ -118,7 +118,7 @@ export default function MaintenancePage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-stone-800 dark:text-stone-100">
-            Maintenance Sistem
+            Perawatan Sistem
           </h2>
           <p className="text-sm text-stone-400 mt-0.5">
             Kelola perbaikan dan perawatan perangkat sensor
@@ -126,8 +126,8 @@ export default function MaintenancePage() {
         </div>
         <div className="flex gap-3">
           {user?.role && user.role !== "Peternak" && (
-            <button onClick={() => setShowAddModal(true)} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors">
-              <FaPlus className="w-4 h-4" /> Tambah Maintenance
+            <button onClick={() => setShowAddModal(true)} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors">
+              <FaPlus className="w-4 h-4" /> <span className="hidden lg:block">Tambah Perawatan </span>
             </button>
           )}
           <button onClick={handleExport} className="flex items-center gap-2 border border-stone-300 dark:border-stone-600 rounded-full bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors px-4 py-2">
@@ -171,7 +171,7 @@ export default function MaintenancePage() {
         {filtered.length === 0 ? (
           <div className="bg-white dark:bg-stone-950 rounded-2xl border border-stone-100 dark:border-stone-800 p-12 text-center">
             <FaWrench className="w-12 h-12 text-stone-300 dark:text-stone-600 mx-auto mb-3" />
-            <p className="text-stone-400">Tidak ada data maintenance</p>
+            <p className="text-stone-400">Tidak ada data perawatan</p>
           </div>
         ) : (
           filtered.map((item) => {
@@ -232,11 +232,11 @@ export default function MaintenancePage() {
         )}
       </div>
 
-      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Tambah Maintenance Baru">
+      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Tambah Perawatan Baru">
         <form onSubmit={handleAddMaintenance} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Tipe Maintenance</label>
+              <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Tipe Perawatan</label>
               <input type="text" required value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })} className="w-full px-3 py-2 border border-stone-300 dark:border-stone-600 rounded-lg bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-emerald-500 focus:border-transparent" placeholder="Penggantian Baterai"/>
             </div>
           </div>
@@ -296,7 +296,7 @@ export default function MaintenancePage() {
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               className="w-full px-3 py-2 border border-stone-300 dark:border-stone-600 rounded-lg bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               rows={3}
-              placeholder="Deskripsi detail maintenance..."
+              placeholder="Deskripsi detail perawatan..."
             />
           </div>
           <div className="flex gap-3 pt-4">

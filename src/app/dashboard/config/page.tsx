@@ -8,27 +8,23 @@ import { toast } from "sonner";
 export default function SystemConfigPage() {
   const { user } = useAuth();
   const [config, setConfig] = useState({
-    // General Settings
     farmName: "Smart Dairy Farm Jawa Barat",
     timezone: "Asia/Jakarta",
     language: "id",
     autoBackup: true,
-    
-    // Network Settings
+
     wifiSSID: "CowManager_Network",
     wifiPassword: "••••••••••",
     networkStatus: "online",
-    
-    // Sensor Settings
-    sensorUpdateInterval: 30, // seconds
+
+    sensorUpdateInterval: 30,
     temperatureUnit: "celsius",
     alertThreshold: {
       high: 40.0,
       low: 35.0
     },
-    
-    // Data Settings
-    dataRetention: 30, // days
+
+    dataRetention: 30,
     autoExport: false,
     exportFormat: "csv"
   });
@@ -74,7 +70,7 @@ export default function SystemConfigPage() {
   };
 
   const handleMarkAlertRead = (alertId: number) => {
-    setAlerts(alerts.map(alert => 
+    setAlerts(alerts.map(alert =>
       alert.id === alertId ? { ...alert, read: true } : alert
     ));
   };
@@ -84,7 +80,6 @@ export default function SystemConfigPage() {
   return (
     <div className="p-6">
       <div className="max-w-9xl mx-auto">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-stone-900 dark:text-stone-100">
             Konfigurasi Sistem
@@ -95,7 +90,6 @@ export default function SystemConfigPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* General Settings */}
           <div className="bg-white dark:bg-stone-800 rounded-xl shadow-sm border border-stone-200 dark:border-stone-700 p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center">
@@ -106,7 +100,7 @@ export default function SystemConfigPage() {
                 <p className="text-sm text-stone-500 dark:text-stone-400">Konfigurasi dasar sistem</p>
               </div>
             </div>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
@@ -119,7 +113,7 @@ export default function SystemConfigPage() {
                   className="w-full px-3 py-2 border border-stone-300 dark:border-stone-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-stone-700 dark:text-stone-200"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
                   Timezone
@@ -162,7 +156,6 @@ export default function SystemConfigPage() {
             </button>
           </div>
 
-          {/* Network Settings */}
           <div className="bg-white dark:bg-stone-800 rounded-xl shadow-sm border border-stone-200 dark:border-stone-700 p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
@@ -173,7 +166,7 @@ export default function SystemConfigPage() {
                 <p className="text-sm text-stone-500 dark:text-stone-400">Konfigurasi WiFi dan koneksi</p>
               </div>
             </div>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
@@ -186,7 +179,7 @@ export default function SystemConfigPage() {
                   className="w-full px-3 py-2 border border-stone-300 dark:border-stone-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-stone-700 dark:text-stone-200"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
                   Password
@@ -218,7 +211,6 @@ export default function SystemConfigPage() {
             </div>
           </div>
 
-          {/* Device Management */}
           <div className="bg-white dark:bg-stone-800 rounded-xl shadow-sm border border-stone-200 dark:border-stone-700 p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
@@ -229,7 +221,7 @@ export default function SystemConfigPage() {
                 <p className="text-sm text-stone-500 dark:text-stone-400">Status sensor dan perangkat IoT</p>
               </div>
             </div>
-            
+
             <div className="space-y-3">
               {maintenance.devices.map((device) => (
                 <div key={device.id} className="flex items-center justify-between p-3 border border-stone-200 dark:border-stone-600 rounded-lg">
@@ -266,7 +258,6 @@ export default function SystemConfigPage() {
           </div>
         </div>
 
-        {/* Alerts Section */}
         <div className="mt-6">
           <div className="bg-white dark:bg-stone-800 rounded-xl shadow-sm border border-stone-200 dark:border-stone-700 p-6">
             <div className="flex items-center gap-3 mb-4">
@@ -278,14 +269,14 @@ export default function SystemConfigPage() {
                 <p className="text-sm text-stone-500 dark:text-stone-400">Kelola notifikasi sistem dan peringatan</p>
               </div>
             </div>
-            
+
             <div className="space-y-3">
               {alerts.map((alert) => (
-                <div 
-                  key={alert.id} 
+                <div
+                  key={alert.id}
                   className={`flex items-start gap-3 p-3 border rounded-lg ${
-                    alert.read 
-                      ? 'border-stone-200 dark:border-stone-600 bg-stone-50 dark:bg-stone-700/50' 
+                    alert.read
+                      ? 'border-stone-200 dark:border-stone-600 bg-stone-50 dark:bg-stone-700/50'
                       : 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20'
                   }`}
                 >
@@ -312,7 +303,6 @@ export default function SystemConfigPage() {
           </div>
         </div>
 
-        {/* Data Export Section */}
         <div className="mt-6">
           <div className="bg-white dark:bg-stone-800 rounded-xl shadow-sm border border-stone-200 dark:border-stone-700 p-6">
             <div className="flex items-center gap-3 mb-4">
@@ -324,7 +314,7 @@ export default function SystemConfigPage() {
                 <p className="text-sm text-stone-500 dark:text-stone-400">Ekspor data sistem dan laporan</p>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
@@ -340,7 +330,7 @@ export default function SystemConfigPage() {
                   <option value="json">JSON</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
                   Retensi Data (hari)

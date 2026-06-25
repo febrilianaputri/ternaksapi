@@ -3,12 +3,13 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { FaWrench, FaUsers, FaBell, FaMoon, FaSun, FaSignOutAlt, FaChevronRight, FaChevronDown, FaCog, FaExclamationTriangle, FaExclamationCircle, FaCheckCircle, FaInfoCircle, FaBook } from "react-icons/fa";
+import { FaWrench, FaUsers, FaBell, FaMoon, FaSun, FaSignOutAlt, FaChevronRight, FaChevronDown, FaCog, FaExclamationTriangle, FaExclamationCircle, FaCheckCircle, FaInfoCircle } from "react-icons/fa";
 import { LuLayoutDashboard } from "react-icons/lu";
 import { MdOutlineMonitorHeart } from "react-icons/md";
 import { GiCow } from "react-icons/gi";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
+import { ReadOnlyProvider } from "@/context/ReadOnlyContext";
 import type { DashboardAlert } from "@/lib/dashboard";
 import type { HealthAlert } from "@/lib/firebase-rtdb";
 import { fetchDataSensorFromRtdb, extractHealthAlerts } from "@/lib/firebase-rtdb";
@@ -24,21 +25,16 @@ interface NavItem {
   isMain?: boolean;
   exact?: boolean;
   isSubmenu?: boolean;
-  submenu?: NavItem[];
 }
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const teknisiNavItems = [
     { href: "/dashboard", icon: null, mobileIcon: LuLayoutDashboard, label: "Dashboard", isMain: true, exact: true },
-    {
-      href: "/dashboard/cattle", icon: GiCow, label: "Area Peternak", isSubmenu: true, submenu: [
-        { href: "/dashboard/cattle", label: "Manajemen Sapi" },
-        { href: "/dashboard/sensors", label: "Monitoring Sapi" }
-      ]
-    },
-    { href: "/dashboard/maintenance", icon: FaWrench, label: "Maintenance", isSubmenu: true },
-    { href: "/dashboard/admin", icon: FaUsers, label: "Manajemen Pengguna", isSubmenu: true },
-    { href: "/dashboard/config", icon: FaCog, label: "Manajemen Sistem", isSubmenu: true },
+    { href: "/dashboard/cattle", icon: GiCow, label: "Manajemen Sapi", isSubmenu: true },
+    { href: "/dashboard/sensors", icon: MdOutlineMonitorHeart, label: "Monitoring Sapi", isSubmenu: true },
+    { href: "/dashboard/maintenance", icon: FaWrench, label: "Perawatan", isSubmenu: true },
+    { href: "/dashboard/admin", icon: FaUsers, label: "Pengguna", isSubmenu: true },
+    { href: "/dashboard/config", icon: FaCog, label: "Sistem", isSubmenu: true },
   ];
 
   const peternakNavItems = [
@@ -51,7 +47,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
-  const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [alertsData, setAlertsData] = useState<DashboardAlert[]>([]);
   const [firebaseAlerts, setFirebaseAlerts] = useState<HealthAlert[]>([]);
   const { user, logout, isAuthenticated, isLoading } = useAuth();
@@ -65,11 +60,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     }
   }, [isLoading, isAuthenticated, router]);
 
-  // Fetch health alerts dari Firebase (sama seperti Alert Kesehatan Sapi Hidup di dashboard)
   useEffect(() => {
     (async () => {
       try {
-        const sensorRes = await fetch("/api/sensors");
+        const sensorRes = await fetch("/api/sensors", { credentials: "include" });
         if (!sensorRes.ok) return;
 
         const sensors = await sensorRes.json() as {
@@ -105,20 +99,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     })();
   }, [isAuthenticated]);
 
-  const toggleMenu = (menuLabel: string) => {
-    setExpandedMenus(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(menuLabel)) {
-        newSet.delete(menuLabel);
-      } else {
-        newSet.add(menuLabel);
-      }
-      return newSet;
-    });
-  };
-
   const navItems = user?.role === "Teknisi" ? teknisiNavItems : peternakNavItems;
   const unreadAlerts = alertsData.filter((a) => !a.read).length;
+  
   const isActive = (href: string, exact?: boolean) => {
     if (exact) return pathname === href;
     return pathname === href || pathname.startsWith(href + "/");
@@ -177,40 +160,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </p>
             {navItems.filter(item => item.isSubmenu).map((item) => {
               const active = isActive(item.href);
-              const hasSubmenu = 'submenu' in item && Array.isArray(item.submenu) && item.submenu.length > 0;
-              const isExpanded = expandedMenus.has(item.label);
               return (
-                <div key={item.href}>
-                  {hasSubmenu ? (
-                    <button onClick={() => toggleMenu(item.label)} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all group ${active ? "bg-[#354024] text-white shadow-lg" : "text-stone-700 dark:text-stone-300 hover:bg-[#e5d7c4]/30 dark:hover:bg-[#354024]/20 hover:text-[#354024] dark:hover:text-[#54cd19]"}`}>
-                      {(() => {
-                        const Icon = item.icon;
-                        return Icon ? <Icon className="w-4 h-4" /> : null;
-                      })()}
-                      {item.label}
-                      <FaChevronDown className={`w-4 h-4 ml-auto transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                    </button>
-                  ) : (
-                    <Link href={item.href} className={`flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all group ${active ? "bg-[#354024] text-white shadow-lg" : "text-stone-700 dark:text-stone-300 hover:bg-[#e5d7c4]/30 dark:hover:bg-[#354024]/20 hover:text-[#354024] dark:hover:text-[#54cd19]"}`}>
-                      {(() => {
-                        const Icon = item.icon;
-                        return Icon ? <Icon className="w-4 h-4" /> : null;
-                      })()}
-                      {item.label}
-                    </Link>
-                  )}
-                  {hasSubmenu && isExpanded && (
-                    <div className="ml-6 mt-1 space-y-1">
-                      {((item as any).submenu as NavItem[])?.map((subItem: NavItem) => (
-                        <Link href={subItem.href} key={subItem.href} className={`flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all ${isActive(subItem.href) ? "bg-[#54cd19]/20 dark:bg-[#54cd19]/10 text-[#354024] font-medium"
-                          : "text-stone-600 dark:text-[#cfbb99] hover:bg-[#e5d7c4]/20 dark:hover:bg-[#354024]/30"}`}>
-                          <div className="w-1.5 h-1.5 rounded-full bg-stone-400" />
-                          {subItem.label}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all group ${active ? "bg-[#354024] text-white shadow-lg" : "text-stone-700 dark:text-stone-300 hover:bg-[#e5d7c4]/30 dark:hover:bg-[#354024]/20 hover:text-[#354024] dark:hover:text-[#54cd19]"}`}>
+                  {(() => {
+                    const Icon = item.icon;
+                    return Icon ? <Icon className="w-4 h-4" /> : null;
+                  })()}
+                  {item.label}
+                </Link>
               );
             })}
           </div>
@@ -245,26 +202,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 <span className="text-[#354024] dark:text-[#e5d7c4] font-medium">Dashboard</span>
               ) : (
                 (() => {
-                  const parentItem = navItems.find(item =>
-                    'submenu' in item && !!item.submenu && Array.isArray(item.submenu) && (item.submenu as NavItem[]).some((sub: NavItem) => isActive(sub.href))) as (NavItem & { submenu: NavItem[] }) | undefined;
-                  const subItem = parentItem ? (parentItem.submenu as NavItem[]).find((sub: NavItem) => isActive(sub.href)) : undefined;
-                  const mainItem = navItems.find((n) => pathname === n.href);
+                  const mainItem = navItems.find((n) => pathname === n.href || pathname.startsWith(n.href + "/"));
                   const isFaCogPage = pathname === "/dashboard/settings";
                   if (isFaCogPage) {
                     return <span className="text-[#354024] dark:text-[#e5d7c4] font-medium">Pengaturan</span>;
                   }
 
-                  if (subItem && parentItem) {
-                    return (
-                      <>
-                        <Link href="/dashboard" className="hover:text-[#54cd19] transition-colors">Dashboard</Link>
-                        <FaChevronRight className="w-4 h-4" />
-                        <Link href={parentItem.href} className="hover:text-[#54cd19] transition-colors">{parentItem.label}</Link>
-                        <FaChevronRight className="w-4 h-4" />
-                        <span className="text-[#354024] dark:text-[#e5d7c4] font-medium">{subItem.label}</span>
-                      </>
-                    );
-                  }
                   if (mainItem) {
                     return (
                       <>
@@ -300,9 +243,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                   <div className="max-h-72 overflow-y-auto divide-y divide-[#e5d7c4]/20 dark:divide-[#354024]/30">
                     {alertsData.length === 0 ? (
                       <div className="px-4 py-6 text-center">
-                        <FaCheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-                        <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Semua Sapi Sehat</p>
-                        <p className="text-xs text-stone-400 mt-1">Tidak ada alert kesehatan</p>
+                        <p className="text-xs text-stone-400 mt-1">Tidak ada notifikasi kesehatan</p>
                       </div>
                     ) : (
                       alertsData.slice(0, 5).map((alert) => (
@@ -377,9 +318,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto pb-24 lg:pb-0 scrollbar-hide">          {children}
+        <main className="flex-1 overflow-y-auto pb-24 lg:pb-0 scrollbar-hide">
+          <ReadOnlyProvider>
+            {children}
+          </ReadOnlyProvider>
         </main>
       </div>
+      
       <nav className="lg:hidden fixed bottom-3 left-2 right-2 z-40 h-14 bg-[#f0f4e8] dark:bg-[#232b1c] border border-[#e5d7c4]/20 dark:border-[#354024]/30 rounded-[20px] shadow-xl px-1">
         <div className="relative w-full h-full flex items-center justify-between">          
           {activeIndex !== -1 && (
@@ -398,67 +343,26 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
           {navItems.map((item, index) => {
             const active = index === activeIndex;
-            const hasSubmenu = 'submenu' in item && Array.isArray(item.submenu) && item.submenu.length > 0;
-            const isExpanded = expandedMenus.has(item.label);
             return (
               <div key={item.href} className="flex-1 h-full relative flex items-center justify-center">
-                {hasSubmenu ? (
-                  <button className="flex flex-col items-center justify-center w-full h-full z-20 text-stone-500 dark:text-[#cfbb99]" onClick={() => toggleMenu(item.label)}>
-                    {!active && (
-                      <>
-                        {(() => {
-                          const Icon = item.mobileIcon || item.icon;
-                          return Icon ? <Icon className="w-5 h-5 opacity-75 hover:opacity-100 transition-opacity" /> : null;
-                        })()}
-                      </>
-                    )}
-                    {active && (
-                      <span className="text-[11px] font-bold mt-7 text-[#354024] dark:text-[#54cd19] tracking-tighter truncate max-w-full px-0.5 transition-all duration-300">
-                        {item.label.split(' ')[0]}
-                      </span>
-                    )}
-                  </button>
-                ) : (
-                  <Link
-                    href={item.href}
-                    className="flex flex-col items-center justify-center w-full h-full z-20 text-stone-500 dark:text-[#cfbb99]"
-                  >
-                    {!active && (
-                      <>
-                        {(() => {
-                          const Icon = item.mobileIcon || item.icon;
-                          return Icon ? <Icon className="w-5 h-5 opacity-75 hover:opacity-100 transition-opacity" /> : null;
-                        })()}
-                      </>
-                    )}
-                    {active && (
-                      <span className="text-[11px] font-bold mt-7 text-[#354024] dark:text-[#54cd19] tracking-tighter truncate max-w-full px-0.5 transition-all duration-300">
-                        {item.label.split(' ')[0]}
-                      </span>
-                    )}
-                  </Link>
-                )}
-
-                {hasSubmenu && isExpanded && (
-                  <>
-                    <div className="fixed inset-0 z-30" onClick={() => toggleMenu(item.label)} />
-                    <div className="absolute bottom-16 z-40 bg-[#f0f4e8] dark:bg-[#232b1c] p-1.5 rounded-xl border border-[#e5d7c4]/20 dark:border-[#354024]/30 shadow-xl flex flex-col gap-1 min-w-[130px] justify-center transition-all duration-200">
-                      {((item as any).submenu as NavItem[]).map((subItem: NavItem) => (
-                        <Link
-                          key={subItem.href}
-                          href={subItem.href}
-                          className={`px-2 py-1 text-[11px] text-center font-medium rounded-md block transition-colors ${
-                            isActive(subItem.href)
-                              ? "bg-[#354024] text-white"
-                              : "text-[#354024] dark:text-[#e5d7c4] hover:bg-[#e5d7c4]/20 dark:hover:bg-[#354024]/30"
-                          }`}
-                        >
-                          {subItem.label}
-                        </Link>
-                      ))}
-                    </div>
-                  </>
-                )}
+                <Link
+                  href={item.href}
+                  className="flex flex-col items-center justify-center w-full h-full z-20 text-stone-500 dark:text-[#cfbb99]"
+                >
+                  {!active && (
+                    <>
+                      {(() => {
+                        const Icon = item.mobileIcon || item.icon;
+                        return Icon ? <Icon className="w-5 h-5 opacity-75 hover:opacity-100 transition-opacity" /> : null;
+                      })()}
+                    </>
+                  )}
+                  {active && (
+                    <span className="text-[11px] font-bold mt-7 text-[#354024] dark:text-[#54cd19] tracking-tighter truncate max-w-full px-0.5 transition-all duration-300">
+                      {item.label.split(' ')[0]}
+                    </span>
+                  )}
+                </Link>
               </div>
             );
           })}

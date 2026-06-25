@@ -112,10 +112,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     if (!result.ok) {
+      console.error("[LOGIN] Login failed:", result.error);
       setIsLoading(false);
       return false;
     }
 
+    console.log("[LOGIN] Login successful, response data:", result.data);
     setUser(result.data);
     persistUser(result.data);
     setIsLoading(false);
@@ -188,11 +190,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
-    void firebaseSignOut();
+  const logout = async () => {
     setUser(null);
     if (typeof window !== "undefined") {
       localStorage.removeItem("sdf_user");
+    }
+
+    try {
+      await apiPost("/api/auth/logout", {});
+    } catch {
+    }
+
+    try {
+      await firebaseSignOut();
+    } catch {
     }
   };
 

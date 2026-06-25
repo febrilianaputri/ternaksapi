@@ -35,7 +35,6 @@ export function RealtimeClock() {
     });
   };
 
-  // Show placeholder during SSR/hydration
   if (!mounted || !time) {
     return (
       <div className="flex flex-col items-end text-right">

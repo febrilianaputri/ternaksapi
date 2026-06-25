@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
 import {
@@ -16,7 +16,6 @@ import {
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { isValidEmailFormat, normalizeEmail } from "@/lib/validation";
 
-/** Kirim kode OTP ke email; akun dibuat setelah verifikasi di /verify-email */
 export async function POST(request: NextRequest) {
   try {
     if (!isMailerConfigured()) {

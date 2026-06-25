@@ -9,15 +9,13 @@ import {
 } from "react-icons/fa";
 import { GiCow } from "react-icons/gi";
 
-/* ── Images ─────────────────────────────────────────────────────────── */
 const IMG_SENSOR  = "https://images.unsplash.com/photo-1762381650890-43b1030fc842?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb3clMjBlYXIlMjB0YWclMjBJb1QlMjB3ZWFyYWJsZSUyMHNlbnNvciUyMGNvbHNlJTIwdXB8ZW58MXx8fHwxNzc3MTA1MDA2fDA&ixlib=rb-4.1.0&q=80&w=1080";
-const IMG_VET     = "https://images.unsplash.com/photo-1598555800431-229e18bc8ac5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2ZXRlcmluYXJpYW4lMjBkb2N0b3IlMjBjaGVja2luZyUyMGNvdyUyMGhlYWx0aHxlbnwxfHx8fDE3NzcxMDQwNzR8MA&ixlib=rb-4.1.0&q=80&w=1080";
+const IMG_VET     = "https://images.unsplash.com/photo-1598555800431-229e18bc8ac5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2ZXRlcmluYXJpYW4lMjBkb2N0b3IlMjBjaGVja2luZyUyMGNvdyUyMGhlYWx0aHxlbnwxfHx8MTc3NzEwNDA3NHww&ixlib=rb-4.1.0&q=80&w=1080";
 const IMG_HERD    = "https://images.unsplash.com/photo-1691886789655-0c71dbd54044?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkYWlyeSUyMGNvdyUyMGhlcmQlMjBncmVlbiUyMHBhc3R1cmV8ZW58MXx8fHwxNzc3MTA0MDczfDA&ixlib=rb-4.1.0&q=80&w=1080";
 const IMG_DASH    = "https://images.unsplash.com/photo-1580982186123-27ab767830aa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkYXRhJTIwYW5hbHl0aWNzJTIwZGFzaGJvYXJkJTIwc2NyZWVuJTIwYWdyaWN1bHR1cmV8ZW58MXx8fHwxNzc3MTA1MDExfDA&ixlib=rb-4.1.0&q=80&w=1080";
 const IMG_BARN    = "https://images.unsplash.com/photo-1628295934652-8f46c0423c2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYXR0bGUlMjBicmVlZGluZyUyMGZhcm0lMjBiYXJuJTIwc3RhYmxlfGVufDF8fHx8MTc3NzEwNDA3Nnww&ixlib=rb-4.1.0&q=80&w=1080";
-const IMG_FARMER  = "https://images.unsplash.com/photo-1642439994493-3816a23c997a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmYXJtZXIlMjB1c2luZyUyMHRhYmxldCUyMHNtYXJ0JTIwYWdyaWN1bHR1cmUlMjBmaWVsZHxlbnwxfHx8fDE3NzcxMDQwNzN8MA&ixlib=rb-4.1.0&q=80&w=1080";
+const IMG_FARMER  = "https://images.unsplash.com/photo-1642439994493-3816a23c997a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmYXJtZXIlMjB1c2luZyUyMHRhYmxldCUyMHNtYXJ0JTIwYWdyaWN1bHR1cmUlMjBmaWVsZHxlbnwxfHx8MTc3NzEwNDA3M3ww&ixlib=rb-4.1.0&q=80&w=1080";
 
-/* ── Main features — alternating layout ─────────────────────────────── */
 const mainFeatures = [
   {
     id: "cattle",
@@ -71,14 +69,14 @@ const mainFeatures = [
   {
     id: "maintenance",
     icon: FaWrench,
-    badge: "Maintenance Sistem",
+    badge: "Perawatan Sistem",
     title: "Manajemen Sensor & Perangkat",
     desc: "Memastikan semua sensor eartag beroperasi optimal. Perawatan, catat riwayat perbaikan, dan pantau status setiap perangkat IoT di Kandang.",
     img: IMG_BARN,
     color: "bg-brand-cream dark:bg-brand-forest/40",
     iconColor: "text-brand-forest dark:text-brand-cream",
     points: [
-      "Maintenance sensor & perangkat IoT",
+      "Perawatan sensor & perangkat IoT",
       "Riwayat perbaikan dan penggantian perangkat",
       "Prioritas perbaikan: Tinggi / Sedang / Rendah",
       "Status real-time per perangkat",
@@ -86,7 +84,6 @@ const mainFeatures = [
   },
 ];
 
-/* ── Service image cards — like homepage section ─────────────────────── */
 const serviceCards = [
   { img: IMG_HERD,   title: "Manajemen Sapi",      sub: "Koloni & Individu" },
   { img: IMG_SENSOR, title: "Wearable Eartag",      sub: "Suhu real-time" },
@@ -94,7 +91,6 @@ const serviceCards = [
   { img: IMG_FARMER, title: "Perawatan Perangkat IoT",     sub: "Status Kondisi Perangkat" },
 ];
 
-/* ── Additional features grid ────────────────────────────────────────── */
 const additionalFeatures = [
   { icon: FaChartBar,    title: "Dashboard Analitik", desc: "Visualisasi grafik interaktif kondisi seluruh sapi." },
   { icon: FaBell,        title: "Alert & Notifikasi", desc: "Peringatan otomatis via notifikasi saat terdeteksi suhu atau sensor anomali." },
@@ -107,14 +103,9 @@ const additionalFeatures = [
   { icon: FaBolt,        title: "Data Real-time",     desc: "Menampilkan perubahan suhu sensor setiap 6 detik." },
 ];
 
-/* ════════════════════════════════════════════════════════════ */
 export default function FeaturesPage() {
   return (
     <div className="landing-page">
-
-      {/* ══════════════════════════════════════════════════════════
-          HERO — image background with headline
-          ══════════════════════════════════════════════════════════ */}
       <section className="relative h-80 overflow-hidden">
         <img src={IMG_VET} alt="Features" className="w-full h-full object-cover" />
         <div className="absolute inset-0 landing-hero-overlay" />
@@ -132,9 +123,6 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════
-          SERVICE CARDS — portrait image grid
-          ════════════════════════════════════════════════════════ */}
       <section className="py-24 landing-section-alt">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12">
@@ -171,9 +159,6 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* ════════════════════════════════════════════════════════
-          MAIN FEATURES — alternating 2-col
-          ════════════════════════════════════════════════════════ */}
       <section className="py-24 landing-page">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 space-y-24">
           {mainFeatures.map((feat, idx) => (
@@ -181,9 +166,7 @@ export default function FeaturesPage() {
               key={feat.id}
               className={`grid lg:grid-cols-2 gap-14 items-center ${idx % 2 === 1 ? "lg:flex-row-reverse" : ""}`}
             >
-              {/* Text side */}
               <div className={`space-y-6 ${idx % 2 === 1 ? "lg:order-2" : ""}`}>
-                {/* Badge */}
                 <div className={`inline-flex items-center gap-2 ${feat.color} rounded-full px-4 py-1.5`}>
                   <feat.icon className={`w-4 h-4 ${feat.iconColor}`} />
                   <span className={`text-sm font-semibold ${feat.iconColor}`}>{feat.badge}</span>
@@ -192,7 +175,6 @@ export default function FeaturesPage() {
                 <h2 className="text-3xl font-bold text-stone-900 dark:text-stone-100 leading-tight">{feat.title}</h2>
                 <p className="text-stone-500 dark:text-stone-400 leading-relaxed">{feat.desc}</p>
 
-                {/* Point list */}
                 <ul className="space-y-3">
                   {feat.points.map((p) => (
                     <li key={p} className="flex items-start gap-3">
@@ -210,12 +192,10 @@ export default function FeaturesPage() {
                 </Link>
               </div>
 
-              {/* Image side */}
               <div className={idx % 2 === 1 ? "lg:order-1" : ""}>
                 <div className="relative rounded-2xl overflow-hidden shadow-xl">
                   <img src={feat.img} alt={feat.title} className="w-full h-80 object-cover" />
                   <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
-                  {/* Floating badge on image */}
                   <div className="absolute bottom-4 left-4 bg-white dark:bg-stone-900 rounded-xl px-4 py-2.5 shadow-lg">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 bg-brand-forest rounded-full animate-pulse" />
@@ -229,9 +209,6 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* ════════════════════════════════════════════════════════
-          ADDITIONAL FEATURES — 3-col grid
-          ════════════════════════════════════════════════════════ */}
       <section className="py-24 landing-section-alt">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="text-center mb-14">
@@ -259,9 +236,6 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* ════════════════════════════════════════════════════════
-          CTA — dark emerald section
-          ════════════════════════════════════════════════════════ */}
       <section className="py-20 landing-section-dark">
         <div className="max-w-4xl mx-auto px-6 lg:px-12 text-center">
           <span className="landing-eyebrow-on-dark">MULAI SEKARANG</span>

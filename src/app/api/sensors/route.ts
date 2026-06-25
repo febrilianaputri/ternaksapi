@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { fetchDataSensorFromRtdbDetailed, normalizeDataSensor, buildFallbackSensors} from "@/lib/firebase-rtdb";
 import type { DashboardAlert } from "@/lib/dashboard";
 import { sendTelegramNotification } from "@/lib/telegram";
 import { shouldSendNotification } from "@/lib/ratelimit";
+import { getAuthUser } from "@/lib/auth-guard";
 
 interface SapiType {
   idsapi: number;
@@ -14,7 +15,11 @@ interface SapiType {
   status_hidup: string;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const user = getAuthUser(request);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const sapiList = await prisma.sapi.findMany({
       orderBy: { idsapi: "asc" },
@@ -24,18 +29,10 @@ export async function GET() {
     const cattleNames = new Map<number, string>(sapiList.map((s: SapiType) => [s.idsapi, s.nama_sapi]));
     const cattleKandang = new Map<number, string>(sapiList.map((s: SapiType) => [s.idsapi, s.kandang]));
     const cattleEartag = new Map<number, string>(sapiList.map((s: SapiType) => [s.idsapi, s.nomor_eartag ?? `EARTAG-${s.idsapi}`]));
-
     const { data: raw, error: fetchError } = await fetchDataSensorFromRtdbDetailed();
-    const { sensors: parsedSensors, tempHistory } = normalizeDataSensor(
-      raw,
-      cattleNames,
-      cattleKandang,
-      cattleEartag
-    );
-
+    const { sensors: parsedSensors, tempHistory } = normalizeDataSensor( raw, cattleNames, cattleKandang, cattleEartag);
     const matchedCount = parsedSensors.length;
     const rtdbEmpty = parsedSensors.length === 0;
-    
     const sensors = rtdbEmpty && sapiList.length > 0
       ? buildFallbackSensors(sapiList, cattleEartag)
       : parsedSensors;

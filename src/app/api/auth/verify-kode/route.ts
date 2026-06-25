@@ -14,16 +14,15 @@ export async function POST(request: NextRequest) {
     }
 
     if (!process.env.REGISTRATION_KODE) {
-      console.error("[POST /api/auth/verify-kode] REGISTRATION_KODE tidak diset");
       return NextResponse.json(
-        { error: "Konfigurasi server tidak lengkap" },
+        { error: "Konfigurasi tidak lengkap" },
         { status: 500 }
       );
     }
 
     if (!verifyRegistrationKode(no_kode)) {
       return NextResponse.json(
-        { error: "No kode tidak valid atau tidak terdaftar" },
+        { error: "No kode tidak valid" },
         { status: 403 }
       );
     }

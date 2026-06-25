@@ -653,7 +653,6 @@ export async function fetchDataSensorFromRtdb(): Promise<unknown | null> {
 
 export async function fetchDataSensorFromRtdbDetailed(): Promise<RtdbFetchResult> {
   const base = getRtdbUrl();
-  // Only try monitoring.json - your data is there
   const candidates = ["/monitoring.json"];
   let lastError: string | null = null;
 

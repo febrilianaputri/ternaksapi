@@ -2,10 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { deleteCattle, findCattleByParam, updateCattle } from "@/lib/sapi-service";
 import { buildCattleSensorData, fetchDataSensorFromRtdb } from "@/lib/firebase-rtdb";
 import type { CattleInput } from "@/lib/sapi";
+import { getAuthUser } from "@/lib/auth-guard";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {
+  const user = getAuthUser(_request);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
   try {
     const { cattle, bundle } = await findCattleByParam(id);
@@ -45,6 +51,11 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 }
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  const user = getAuthUser(request);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
 
   try {
@@ -66,6 +77,11 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 }
 
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+  const user = getAuthUser(_request);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
 
   try {

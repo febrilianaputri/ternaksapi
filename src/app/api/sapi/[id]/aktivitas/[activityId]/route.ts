@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { deleteActivity, updateActivity } from "@/lib/sapi-service";
 import type { ActivityInput } from "@/lib/sapi";
+import { getAuthUser } from "@/lib/auth-guard";
 
 type RouteParams = { params: Promise<{ id: string; activityId: string }> };
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  const user = getAuthUser(request);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id, activityId } = await params;
 
   try {
@@ -29,6 +35,11 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 }
 
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+  const user = getAuthUser(_request);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id, activityId } = await params;
 
   try {

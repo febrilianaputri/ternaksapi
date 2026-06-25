@@ -4,10 +4,16 @@ import {
   listMedicalRecordsForCattle,
 } from "@/lib/sapi-service";
 import type { MedicalRecordInput } from "@/lib/sapi";
+import { getAuthUser } from "@/lib/auth-guard";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {
+  const user = getAuthUser(_request);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
 
   try {
@@ -23,6 +29,11 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
+  const user = getAuthUser(request);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
 
   try {

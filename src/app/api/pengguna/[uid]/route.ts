@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { initPengguna } from "@/lib/pengguna";
+import { getAuthUser } from "@/lib/auth-guard";
 
 type RouteParams = { params: Promise<{ uid: string }> };
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {
+  const user = getAuthUser(_request);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { uid } = await params;
 
   try {
@@ -29,6 +35,11 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 }
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  const user = getAuthUser(request);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { uid } = await params;
 
   try {

@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
-import { FaThermometerHalf, FaBroadcastTower, FaBatteryHalf, FaMapMarkerAlt, FaExclamationTriangle, FaSync, FaArrowUp, FaArrowDown, FaMinus, FaInfoCircle, FaSpinner} from "react-icons/fa";
+import { FaThermometerHalf, FaBroadcastTower, FaBatteryHalf, FaMapMarkerAlt, FaExclamationTriangle, FaSync, FaArrowUp, FaArrowDown, FaMinus, FaInfoCircle, FaSpinner, FaEye} from "react-icons/fa";
 import { toast } from "sonner";
 import { useSensors } from "@/hooks/useSensors";
 import { getChartColor } from "@/lib/dashboard";
+import { useReadOnly } from "@/context/ReadOnlyContext";
 
 const suhuRendah  = 38.0;
 const suhuTinggi = 39.5;
@@ -112,6 +113,7 @@ function TrendIcon({
 }
 
 export default function SensorMonitoring() {
+  const { isReadOnly } = useReadOnly();
   const { sensors, tempHistory: history, cowNames, loading, error, refresh, updatedAt, source} = useSensors(30000);
   const [refreshing, setRefreshing] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
@@ -156,7 +158,7 @@ export default function SensorMonitoring() {
     return (
       <div className="p-6 text-center text-stone-500">
         <p>{error}</p>
-        <p className="text-xs mt-2">Pastikan node <code>monitoring</code> di Realtime Database tersedia dan aturan Firebase mengizinkan pembacaan.</p>
+        <p className="text-xs mt-2">Pastikan node monitoring di Realtime Database tersedia dan aturan Firebase mengizinkan pembacaan.</p>
       </div>
     );
   }
@@ -184,18 +186,28 @@ export default function SensorMonitoring() {
       )}
 
       <div className="flex flex-row items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-stone-800 dark:text-stone-100">
-            Monitoring Suhu Tubuh Sapi
-          </h2>
+        <div className="flex items-center gap-3">
+          <div>
+            <h2 className="text-xl font-bold text-stone-800 dark:text-stone-100">
+              Monitoring Suhu Tubuh Sapi
+            </h2>
+          </div>
+          {isReadOnly && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#54cd19]/10 border border-[#54cd19]/30 rounded-full">
+              <FaEye className="w-3.5 h-3.5 text-[#54cd19]" />
+              <span className="text-xs font-medium text-[#54cd19]">Baca Saja</span>
+            </div>
+          )}
         </div>
-        <button
-          onClick={handleRefresh}
-          disabled={refreshing}
-          className="flex items-center gap-2 border border-stone-300 dark:border-stone-600 hover:border-emerald-500 text-stone-700 dark:text-stone-300 px-4 py-2 rounded-xl text-sm font-medium transition-colors">
-          <FaSync className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
-          <span className="hidden lg:block">Refresh</span>
-        </button>
+        {!isReadOnly && (
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-2 border border-stone-300 dark:border-stone-600 hover:border-emerald-500 text-stone-700 dark:text-stone-300 px-4 py-2 rounded-xl text-sm font-medium transition-colors">
+            <FaSync className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+            <span className="hidden lg:block">Refresh</span>
+          </button>
+        )}
       </div>
 
       <div className="flex items-center gap-2 border-[#e5d7c4]/20 dark:border-[#354024]/30 bg-[#354024] rounded-b-xl px-4 py-2.5 text-sm text-white">
@@ -335,7 +347,7 @@ export default function SensorMonitoring() {
 
         {history.length === 0 ? (
           <p className="text-sm text-stone-500 dark:text-stone-400 py-16 text-center">
-            Belum ada riwayat suhu 
+            Belum ada riwayat suhu
           </p>
         ) : (
         <ResponsiveContainer width="100%" height={320}>
@@ -389,7 +401,8 @@ export default function SensorMonitoring() {
           </LineChart>
         </ResponsiveContainer>
         )}
-        <div className="flex flex-wrap gap-2">
+        {!isReadOnly && (
+          <div className="flex flex-wrap gap-2">
             {Object.entries(cowNames).map(([key, name]) => (
               <button
                 key={key}
@@ -404,6 +417,7 @@ export default function SensorMonitoring() {
               </button>
             ))}
           </div>
+        )}
       </div>
 
       <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-100 dark:border-stone-800 overflow-hidden">

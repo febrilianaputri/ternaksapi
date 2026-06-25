@@ -31,7 +31,7 @@ export function useSensors(pollMs = 30000) {
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch("/api/sensors");
+      const res = await fetch("/api/sensors", { credentials: "include" });
       const json = (await res.json()) as SensorsPayload;
       setData(json);
       setError(null);

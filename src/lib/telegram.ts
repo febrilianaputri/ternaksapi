@@ -16,7 +16,7 @@ export async function sendTelegramNotification(message: string) {
       body: JSON.stringify({
         chat_id: chatId,
         text: message,
-        parse_mode: "Markdown", // Agar bisa menggunakan format tebal/miring
+        parse_mode: "Markdown",
       }),
     });
 

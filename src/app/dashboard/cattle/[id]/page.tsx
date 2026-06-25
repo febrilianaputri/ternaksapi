@@ -65,7 +65,6 @@ const emptyActivityForm = (): ActivityForm => ({
   jenisTindakan: "Obat_Cacing",
 });
 
-// Tanggal hari ini untuk membatasi input date
 const today = new Date().toISOString().split("T")[0];
 
 function extractActivityDetail(detail: string): string {
@@ -561,7 +560,7 @@ export default function CattleProfilePage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-stone-700 dark:text-stone-300">{record.type}</p>
                     <p className="text-xs text-stone-500 dark:text-stone-400 leading-relaxed">{record.description}</p>
-                    <p className="text-xs text-stone-400 mt-1">{record.date} · {record.vet}</p>
+                    <p className="text-xs text-stone-400 mt-1">{record.date} {record.vet}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className={"text-xs px-2 py-0.5 rounded-full " + (

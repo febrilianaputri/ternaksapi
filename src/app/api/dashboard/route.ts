@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import {
   formatRelativeTime,
@@ -7,8 +7,14 @@ import {
   type DashboardData,
   type DashboardCattleRow,
 } from "@/lib/dashboard";
+import { getAuthUser } from "@/lib/auth-guard";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const user = getAuthUser(request);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const [sapiList, riwayatMedisList, informasiFisikList, riwayatReproduksiList] = await Promise.all([
       prisma.sapi.findMany({
@@ -67,8 +73,8 @@ export async function GET() {
             }
           : null,
         bb_akhir: fisik ? fisik.berat_badan : null,
-        periksaUpdate: s.statusUpdate 
-          ? s.statusUpdate.toISOString() 
+        periksaUpdate: s.statusUpdate
+          ? s.statusUpdate.toISOString()
           : s.sapiUpdate.toISOString(),
       };
     });
