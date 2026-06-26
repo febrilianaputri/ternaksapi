@@ -13,7 +13,7 @@ export type DashboardCattleRow = {
   idsapi: number;
   jenis_sapi: string;
   jenis_kelamin: string;
-  status_hidup: sapi_status_hidup;
+  status_hidup: sapi_status_hidup; 
   reproduksi: Pick<riwayatreproduksi, "tanggal_ib" | "nama_pejantan" | "keterangan"> | null;
   bb_akhir: number | null;
   periksaUpdate: string;
