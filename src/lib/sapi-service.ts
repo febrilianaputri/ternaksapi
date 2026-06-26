@@ -12,13 +12,11 @@ import {
   type SapiBundle,
   type VaccinationRecord,
 } from "@/lib/sapi";
-import type {
-  riwayatmedis,
-  riwayatmedis_jenis_tindakan,
-  sapi_jenis_kelamin,
-  sapi_kandang,
-  sapi_status_hidup,
-} from "@prisma/client";
+
+type RiwayatmedisJenisTindakan = "Obat_Cacing" | "Vaksin_PMK" | "Vaksin_LSD";
+type SapiJenisKelamin = "Jantan" | "Betina";
+type SapiKandang = "Individu" | "KandangDara" | "KoloniBesar";
+type SapiStatusHidup = "Sehat" | "Sakit" | "Mati";
 
 export type MaintenanceRow = {
   idmaintenance: number;
@@ -46,7 +44,13 @@ async function loadMaintenanceList(): Promise<MaintenanceRow[]> {
   }
 }
 
-function mapRiwayatMedisRow(m: riwayatmedis): MedicalRecord {
+function mapRiwayatMedisRow(m: {
+  id_medis: number;
+  idsapi: number;
+  jenis_tindakan: RiwayatmedisJenisTindakan;
+  tanggal_medis: Date;
+  catatan: string | null;
+}): MedicalRecord {
   const vet = "Tim Kesehatan";
   const catatan = m.catatan?.trim() ?? "";
   return {
@@ -62,7 +66,13 @@ function mapRiwayatMedisRow(m: riwayatmedis): MedicalRecord {
   };
 }
 
-function mapMedisActivity(m: riwayatmedis): CattleActivity {
+function mapMedisActivity(m: {
+  id_medis: number;
+  idsapi: number;
+  jenis_tindakan: RiwayatmedisJenisTindakan;
+  tanggal_medis: Date;
+  catatan: string | null;
+}): CattleActivity {
   const catatan = m.catatan?.trim() ?? "";
   return {
     id: `A-M${m.id_medis}`,
@@ -181,9 +191,9 @@ export async function buildSapiBundle(): Promise<SapiBundle> {
       age: calcAgeYears(s.tanggal_lahir),
       weight: f?.berat_badan ?? 0,
       status: s.kandang,
-      health: s.status_hidup,
+      health: s.status_hidup as SapiStatusHidup,
       stall: `Kandang ${cattleId}`,
-      kandangKategori: s.kandang,
+      kandangKategori: s.kandang as SapiKandang,
       birthDate: s.tanggal_lahir.toISOString().split("T")[0],
       eartag: s.nomor_eartag,
       milkAvg: f?.berat_badan ? Math.round(f.berat_badan * 0.05 * 10) / 10 : 0,
@@ -258,10 +268,10 @@ export async function createCattle(input: CattleInput): Promise<CattleListItem> 
       data: {
         nama_sapi: name,
         jenis_sapi: breed,
-        jenis_kelamin: (input.gender ?? "Betina") as sapi_jenis_kelamin,
-        kandang: (input.kandang ?? "KoloniBesar") as sapi_kandang,
+        jenis_kelamin: (input.gender ?? "Betina") as SapiJenisKelamin,
+        kandang: (input.kandang ?? "KoloniBesar") as SapiKandang,
         tanggal_lahir: parseDateInput(input.birthDate),
-        status_hidup: (input.health ?? "Sehat") as sapi_status_hidup,
+        status_hidup: (input.health ?? "Sehat") as SapiStatusHidup,
         ...(input.eartag?.trim() ? { nomor_eartag: input.eartag.trim() } : {}),
       },
     });
@@ -280,7 +290,7 @@ export async function createCattle(input: CattleInput): Promise<CattleListItem> 
       await tx.riwayatmedis.create({
         data: {
           idsapi: sapi.idsapi,
-          jenis_tindakan: "Obat_Cacing",
+          jenis_tindakan: "Obat_Cacing" as RiwayatmedisJenisTindakan,
           tanggal_medis: parseDateInput(input.lastCheck),
           catatan: "Pemeriksaan rutin",
         },
@@ -312,16 +322,16 @@ export async function updateCattle(
         ...(input.name !== undefined && { nama_sapi: input.name.trim() }),
         ...(input.breed !== undefined && { jenis_sapi: input.breed.trim() }),
         ...(input.gender !== undefined && {
-          jenis_kelamin: input.gender as sapi_jenis_kelamin,
+          jenis_kelamin: input.gender as SapiJenisKelamin,
         }),
         ...(input.kandang !== undefined && {
-          kandang: input.kandang as sapi_kandang,
+          kandang: input.kandang as SapiKandang,
         }),
         ...(input.birthDate !== undefined && {
           tanggal_lahir: parseDateInput(input.birthDate),
         }),
         ...(input.health !== undefined && {
-          status_hidup: input.health as sapi_status_hidup,
+          status_hidup: input.health as SapiStatusHidup,
         }),
         ...(input.eartag !== undefined && {
           nomor_eartag: input.eartag.trim() || null,
@@ -344,7 +354,7 @@ export async function updateCattle(
       await tx.riwayatmedis.create({
         data: {
           idsapi,
-          jenis_tindakan: "Obat_Cacing",
+          jenis_tindakan: "Obat_Cacing" as RiwayatmedisJenisTindakan,
           tanggal_medis: parseDateInput(input.lastCheck),
           catatan: "Pembaruan data sapi",
         },
@@ -401,7 +411,7 @@ export async function createMedicalRecord(
   const created = await prisma.riwayatmedis.create({
     data: {
       idsapi,
-      jenis_tindakan: input.jenisTindakan as riwayatmedis_jenis_tindakan,
+      jenis_tindakan: input.jenisTindakan as RiwayatmedisJenisTindakan,
       tanggal_medis: parseDateInput(input.date),
       catatan: input.catatan?.trim() || null,
     },
@@ -428,7 +438,7 @@ export async function updateMedicalRecord(
     where: { id_medis: idMedis },
     data: {
       ...(input.jenisTindakan !== undefined && {
-        jenis_tindakan: input.jenisTindakan as riwayatmedis_jenis_tindakan,
+        jenis_tindakan: input.jenisTindakan as RiwayatmedisJenisTindakan,
       }),
       ...(input.date !== undefined && {
         tanggal_medis: parseDateInput(input.date),
@@ -511,7 +521,7 @@ export async function createActivity(
     const created = await prisma.riwayatmedis.create({
       data: {
         idsapi,
-        jenis_tindakan: (input.jenisTindakan ?? "Obat_Cacing") as riwayatmedis_jenis_tindakan,
+        jenis_tindakan: (input.jenisTindakan ?? "Obat_Cacing") as RiwayatmedisJenisTindakan,
         tanggal_medis: date,
         catatan: input.detail?.trim() || input.type?.trim() || null,
       },
@@ -580,7 +590,7 @@ export async function updateActivity(
       where: { id_medis: parsed.sourceId },
       data: {
         ...(input.jenisTindakan !== undefined && {
-          jenis_tindakan: input.jenisTindakan as riwayatmedis_jenis_tindakan,
+          jenis_tindakan: input.jenisTindakan as RiwayatmedisJenisTindakan,
         }),
         ...(date !== undefined && { tanggal_medis: date }),
         ...(input.detail !== undefined && {
@@ -670,7 +680,7 @@ export async function deleteActivity(
     return true;
   }
 
-  const existingRows = await prisma.$queryRaw<MaintenanceRow[]>`
+  const existingRows = await prisma.$queryRaw<{ idmaintenance: number }[]>`
     SELECT idmaintenance FROM maintenance
     WHERE idmaintenance = ${parsed.sourceId} AND idsapi = ${idsapi}
     LIMIT 1
