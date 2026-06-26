@@ -11,7 +11,7 @@ function createPrismaClient(): PrismaClient {
     throw new Error("DATABASE_URL is not set");
   }
   const adapter = new PrismaMariaDb(url);
-  return new PrismaClient({ adapter });
+  return new PrismaClient({ adapter } as any);
 }
 
 function hasRequiredDelegates(client: PrismaClient): boolean {

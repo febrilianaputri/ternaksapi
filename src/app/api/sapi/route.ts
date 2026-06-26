@@ -21,7 +21,8 @@ export async function GET(request: Request) {
 
     const data = await buildSapiBundle();
     return NextResponse.json(data);
-  } catch {
+  } catch (error) {
+    console.error("[/api/sapi GET error]:", error);
     return NextResponse.json(
       { error: "Gagal memuat data sapi" },
       { status: 500 }

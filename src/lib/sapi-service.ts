@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import {
   calcAgeYears,
   idsapiToCattleId,
@@ -35,7 +36,7 @@ async function loadMaintenanceList(): Promise<MaintenanceRow[]> {
       FROM maintenance
       ORDER BY maintenanceUpdate DESC
     `;
-    return rows.map((r) => ({
+    return rows.map((r: MaintenanceRow) => ({
       ...r,
       maintenanceUpdate: new Date(r.maintenanceUpdate),
     }));
@@ -164,6 +165,8 @@ export async function buildSapiBundle(): Promise<SapiBundle> {
       }),
     ]);
 
+  void riwayatReproduksiList; 
+
   const latestRiwayatMedis = new Map<number, (typeof riwayatMedisList)[number]>();
   for (const row of riwayatMedisList) {
     if (!latestRiwayatMedis.has(row.idsapi)) {
@@ -178,7 +181,7 @@ export async function buildSapiBundle(): Promise<SapiBundle> {
     }
   }
 
-  const cattle: CattleListItem[] = sapiList.map((s) => {
+  const cattle: CattleListItem[] = sapiList.map((s: Prisma.sapiGetPayload<object>) => {
     const m = latestRiwayatMedis.get(s.idsapi);
     const f = latestInformasiFisik.get(s.idsapi);
     const cattleId = idsapiToCattleId(s.idsapi);
@@ -206,8 +209,8 @@ export async function buildSapiBundle(): Promise<SapiBundle> {
   const medicalHistory: MedicalRecord[] = riwayatMedisList.map(mapRiwayatMedisRow);
 
   const vaccinationData: VaccinationRecord[] = maintenanceList
-    .filter((m) => /vaksin/i.test(m.jenis_tindakan))
-    .map((m) => ({
+    .filter((m: MaintenanceRow) => /vaksin/i.test(m.jenis_tindakan))
+    .map((m: MaintenanceRow) => ({
       id: `V${m.idmaintenance}`,
       cattleId: idsapiToCattleId(m.idsapi),
       vaccine: m.jenis_tindakan,
@@ -263,7 +266,7 @@ export async function createCattle(input: CattleInput): Promise<CattleListItem> 
     throw new Error("Nama dan jenis sapi wajib diisi");
   }
 
-  const created = await prisma.$transaction(async (tx) => {
+  const created = await prisma.$transaction(async (tx: any) => {
     const sapi = await tx.sapi.create({
       data: {
         nama_sapi: name,
@@ -315,7 +318,7 @@ export async function updateCattle(
   const existing = await prisma.sapi.findUnique({ where: { idsapi } });
   if (!existing) return null;
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: any) => {
     await tx.sapi.update({
       where: { idsapi },
       data: {
@@ -373,7 +376,7 @@ export async function deleteCattle(idParam: string): Promise<boolean> {
   const existing = await prisma.sapi.findUnique({ where: { idsapi } });
   if (!existing) return false;
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: any) => {
     await tx.informasi_fisik.deleteMany({ where: { idsapi } });
     await tx.riwayatmedis.deleteMany({ where: { idsapi } });
     await tx.riwayatreproduksi.deleteMany({ where: { idsapi } });
@@ -489,8 +492,8 @@ export async function listActivitiesForCattle(
       FROM maintenance
       WHERE idsapi = ${idsapi}
       ORDER BY maintenanceUpdate DESC
-    `.then((rows) =>
-      rows.map((row) => ({
+    `.then((rows: MaintenanceRow[]) =>
+      rows.map((row: MaintenanceRow) => ({
         ...row,
         maintenanceUpdate: new Date(row.maintenanceUpdate),
       }))
@@ -750,7 +753,7 @@ export async function buildFullExportData(): Promise<FullExportData> {
       totalRiwayatMedis: riwayatMedisList.length,
       totalRiwayatReproduksi: riwayatReproduksiList.length,
     },
-    sapi: sapiList.map((s) => ({
+    sapi: sapiList.map((s: Prisma.sapiGetPayload<object>) => ({
       idsapi: s.idsapi,
       nomor_eartag: s.nomor_eartag,
       nama_sapi: s.nama_sapi,
@@ -761,20 +764,20 @@ export async function buildFullExportData(): Promise<FullExportData> {
       status_hidup: s.status_hidup,
       keteranganStatus: s.keteranganStatus,
     })),
-    informasiFisik: informasiFisikList.map((f) => ({
+    informasiFisik: informasiFisikList.map((f: Prisma.informasi_fisikGetPayload<object>) => ({
       idfisik: f.idfisik,
       idsapi: f.idsapi,
       berat_badan: f.berat_badan,
       tanggal_timbang: f.tanggal_timbang.toISOString().split("T")[0],
     })),
-    riwayatMedis: riwayatMedisList.map((m) => ({
+    riwayatMedis: riwayatMedisList.map((m: Prisma.riwayatmedisGetPayload<object>) => ({
       id_medis: m.id_medis,
       idsapi: m.idsapi,
       jenis_tindakan: m.jenis_tindakan,
       tanggal_medis: m.tanggal_medis.toISOString().split("T")[0],
       catatan: m.catatan,
     })),
-    riwayatReproduksi: riwayatReproduksiList.map((r) => ({
+    riwayatReproduksi: riwayatReproduksiList.map((r: Prisma.riwayatreproduksiGetPayload<object>) => ({
       id_reproduksi: r.id_reproduksi,
       idsapi: r.idsapi,
       tanggal_ib: r.tanggal_ib.toISOString().split("T")[0],

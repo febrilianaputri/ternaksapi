@@ -130,7 +130,8 @@ export async function GET(request: NextRequest) {
       matchedCount,
       fetchError,
     });
-  } catch {
+  } catch (error) {
+    console.error("[/api/sensors GET error]:", error);
     return NextResponse.json(
       { error: "Gagal memuat data sensor" },
       { status: 500 }

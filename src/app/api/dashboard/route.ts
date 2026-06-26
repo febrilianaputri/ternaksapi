@@ -154,6 +154,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error) {
+    console.error("[/api/dashboard GET error]:", error);
     return NextResponse.json(
       { error: "Gagal memuat data dashboard" },
       { status: 500 }
