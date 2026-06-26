@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { FaThermometerHalf, FaBroadcastTower, FaBatteryHalf, FaMapMarkerAlt, FaExclamationTriangle, FaArrowUp, FaArrowDown, FaMinus, FaInfoCircle, FaSpinner, FaEye } from "react-icons/fa";
-import { toast } from "sonner";
 import { useSensors } from "@/hooks/useSensors";
 import { getChartColor } from "@/lib/dashboard";
 import { useReadOnly } from "@/context/ReadOnlyContext";
@@ -330,7 +329,7 @@ export default function SensorMonitoring() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
           <div>
             <h3 className="font-semibold text-stone-800 dark:text-stone-200">
-              Grafik Suhu Tubuh
+              Grafik Suhu Sapi
             </h3>
           </div>
         </div>
@@ -403,7 +402,7 @@ export default function SensorMonitoring() {
                   : "border-stone-300 dark:border-stone-600 text-stone-400 bg-transparent"
               }`}
               style={selected.includes(key) ? { backgroundColor: cowColors[key] } : {}}>
-              <span className="font-mono">{key}</span>
+              <span>{name}</span>
             </button>
           ))}
         </div>

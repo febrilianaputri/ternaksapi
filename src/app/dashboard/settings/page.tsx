@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import type { PenggunaPublic } from "@/lib/pengguna";
 import { FaUser as UserIcon, FaEnvelope, FaMapMarkerAlt, FaBuilding, FaShieldAlt, FaKey, FaSave, FaCamera, FaEdit, FaTimes, FaExclamationTriangle, FaExclamationCircle, FaBell, FaDownload, FaTrash, FaFilter, FaHistory } from "react-icons/fa";
-import { toast } from "sonner";
+import { swalSuccess, swalError } from "@/lib/swal";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { useSensors } from "@/hooks/useSensors";
 import { fetchDataSensorFromRtdb, extractHealthAlerts, type HealthAlert } from "@/lib/firebase-rtdb";
@@ -57,7 +57,6 @@ export default function SettingsPage() {
 
   const [farmName, setFarmName] = useState("Smart Dairy Farm Jawa Barat");
 
-  // Notification history state
   const [notifications, setNotifications] = useState<HealthAlert[]>([]);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [filterType, setFilterType] = useState<"all" | "danger" | "warning">("all");
@@ -110,9 +109,7 @@ export default function SettingsPage() {
         if (!cancelled) applyProfile(data, true);
       } catch {
         if (!cancelled) {
-          toast.error(
-            "Profil dari database tidak dimuat. Anda tetap bisa mengedit, lalu simpan."
-          );
+          swalError("Gagal", "Profil dari database tidak dimuat. Anda tetap bisa mengedit, lalu simpan.");
         }
       } finally {
         if (!cancelled) setIsFetching(false);
@@ -124,7 +121,6 @@ export default function SettingsPage() {
     };
   }, [user?.uid, user?.email]);
 
-  // Fetch notification history
   useEffect(() => {
     if (activeTab !== "notifications") return;
 
@@ -154,14 +150,12 @@ export default function SettingsPage() {
         const alerts = extractHealthAlerts(raw, cattleNames, cattleEartags);
         if (!cancelled) {
           setNotifications(alerts.sort((a, b) => {
-            // Sort by time, newest first
             const timeA = new Date(a.time).getTime() || 0;
             const timeB = new Date(b.time).getTime() || 0;
             return timeB - timeA;
           }));
         }
       } catch {
-        // Silent fail for notifications
       } finally {
         if (!cancelled) setNotificationsLoading(false);
       }
@@ -202,11 +196,11 @@ export default function SettingsPage() {
       /\.jpe?g$/i.test(file.name);
 
     if (!isJpeg) {
-      toast.error("Hanya file JPG/JPEG yang diperbolehkan");
+      swalError("Gagal", "Hanya file JPG/JPEG yang diperbolehkan");
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      toast.error("Ukuran foto maksimal 2 MB");
+      swalError("Gagal", "Ukuran foto maksimal 2 MB");
       return;
     }
 
@@ -264,10 +258,11 @@ export default function SettingsPage() {
       const data = (await res.json()) as PenggunaPublic;
       applyProfile(data, true);
       clearImagePreview();
-      toast.success("Profil berhasil diperbarui!");
+      swalSuccess("Berhasil", "Profil berhasil diperbarui!");
       setIsEditing(false);
     } catch (e) {
-      toast.error(
+      swalError(
+        "Gagal",
         e instanceof Error ? e.message : "Gagal memperbarui profil"
       );
     } finally {
@@ -277,13 +272,13 @@ export default function SettingsPage() {
 
   const handleChangePassword = async () => {
     if (formData.newPassword !== formData.confirmPassword) {
-      toast.error("Password baru tidak cocok");
+      swalError("Gagal", "Password baru tidak cocok");
       return;
     }
     setIsLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success("Password berhasil diubah!");
+      swalSuccess("Berhasil", "Password berhasil diubah!");
       setFormData((prev) => ({
         ...prev,
         currentPassword: "",
@@ -291,7 +286,7 @@ export default function SettingsPage() {
         confirmPassword: "",
       }));
     } catch {
-      toast.error("Gagal mengubah password");
+      swalError("Gagal", "Gagal mengubah password");
     } finally {
       setIsLoading(false);
     }
@@ -308,7 +303,7 @@ export default function SettingsPage() {
     const filtered = filterType === "all" ? notifications : notifications.filter(n => n.type === filterType);
 
     if (filtered.length === 0) {
-      toast.error("Tidak ada notifikasi untuk diekspor");
+      swalError("Gagal", "Tidak ada notifikasi untuk diekspor");
       return;
     }
 
@@ -331,12 +326,12 @@ export default function SettingsPage() {
     link.href = URL.createObjectURL(blob);
     link.download = `riwayat_notifikasi_${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
-    toast.success(`${filtered.length} notifikasi berhasil diekspor`);
+    swalSuccess("Berhasil", `${filtered.length} notifikasi berhasil diekspor`);
   };
 
   const clearNotifications = () => {
     setNotifications([]);
-    toast.success("Riwayat notifikasi telah dibersihkan");
+    swalSuccess("Berhasil", "Riwayat notifikasi telah dibersihkan");
   };
 
   const tabBtnClass = (id: TabId) =>

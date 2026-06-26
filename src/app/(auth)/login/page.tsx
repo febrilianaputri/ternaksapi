@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { FaEye, FaEyeSlash, FaSpinner } from "react-icons/fa";
 import { FaGoogle } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext";
-import { toast } from "sonner";
+import { swalSuccess } from "@/lib/swal";
 import { glassBlock, lbl, inputClass, buttonClass } from "@/lib/styles";
 import { AuthErrorBanner } from "@/components/auth/AuthErrorBanner";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
@@ -38,7 +38,7 @@ export default function LoginPage() {
       return;
     }
 
-    toast.success("Berhasil masuk");
+    swalSuccess("Berhasil", "Berhasil masuk");
     router.push("/dashboard");
   };
 

@@ -6,7 +6,7 @@ import { FaBalanceScale, FaChevronRight, FaArrowRight, FaHeartbeat, FaExclamatio
 import { FaArrowUp, FaArrowDown } from "react-icons/fa";
 import { GiCow } from "react-icons/gi";
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend, ReferenceLine } from "recharts";
-import { toast } from "sonner";
+import { swalSuccess, swalError } from "@/lib/swal";
 import { useSensors } from "@/hooks/useSensors";
 import { getChartColor, type DashboardData, type DashboardAlert } from "@/lib/dashboard";
 import { alertColors, dashboardStatusStyle, healthProgressColors } from "@/lib/styles";
@@ -125,7 +125,7 @@ export default function MainDashboard() {
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : "Error");
-          toast.error("Gagal memuat data dashboard");
+          swalError("Gagal", "Gagal memuat data dashboard");
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -143,7 +143,6 @@ export default function MainDashboard() {
         const raw = await fetchDataSensorFromRtdb();
         if (cancelled || !raw) return;
 
-        // Guard against undefined cowNames/cowEartags
         const cowNames = sensorCowNames ?? {};
         const cowEartags = sensorCowEartags ?? {};
 
@@ -165,7 +164,6 @@ export default function MainDashboard() {
         const alerts = extractHealthAlerts(raw, cattleNames, cattleEartags);
         if (!cancelled) setFirebaseAlerts(alerts);
       } catch {
-        // Silent fail for Firebase alerts
       }
     })();
     return () => {
@@ -175,7 +173,7 @@ export default function MainDashboard() {
 
   const handleExport = () => {
     if (!data?.cattle.length) {
-      toast.error("Tidak ada data untuk diekspor");
+      swalError("Gagal", "Tidak ada data untuk diekspor");
       return;
     }
     const csvContent = [
@@ -196,7 +194,7 @@ export default function MainDashboard() {
     link.href = URL.createObjectURL(blob);
     link.download = `dashboard_sapi_${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
-    toast.success("Data berhasil diekspor");
+    swalSuccess("Berhasil", "Data berhasil diekspor");
   };
 
   if (loading) {
@@ -218,10 +216,10 @@ export default function MainDashboard() {
     );
   }
 
-  const { stats, cattle } = data;
-  const total = stats.totalSapi || 1;
-  const needsAction = firebaseAlerts.length;
-  const chartSeriesKeys = sensorHistory.length > 0
+  const { stats, cattle } = data ?? { stats: null, cattle: [] };
+  const total = stats?.totalSapi || 1;
+  const needsAction = firebaseAlerts?.length ?? 0;
+  const chartSeriesKeys = (sensorHistory?.length ?? 0) > 0
     ? Object.keys(sensorHistory[0]).filter((key) => key !== "label")
     : [];
 
@@ -285,7 +283,7 @@ export default function MainDashboard() {
           <div className="flex items-center justify-between mb-5">
             <div>
               <h3 className="font-semibold text-[#354024] dark:text-[#e5d7c4]">
-                Grafik Realtime Suhu Sapi
+                Grafik Suhu Sapi
               </h3>
             </div>
             <Link href="/dashboard/sensors" className="text-xs text-[#54cd19] dark:text-[#889063] hover:underline flex items-center gap-1">

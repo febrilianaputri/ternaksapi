@@ -3,7 +3,7 @@
 import { FaGoogle, FaSpinner } from "react-icons/fa";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { swalSuccess, swalError } from "@/lib/swal";
 import { useAuth } from "@/context/AuthContext";
 
 type GoogleSignInButtonProps = {
@@ -20,7 +20,7 @@ export function GoogleSignInButton({label, mode, farmCode, disabled, redirectTo 
   const [loading, setLoading] = useState(false);
   const handleClick = async () => {
     if (mode === "register" && !farmCode?.trim()) {
-      toast.error("Verifikasi no kode farm terlebih dahulu.");
+      swalError("Peringatan", "Verifikasi no kode farm terlebih dahulu.");
       return;
     }
 
@@ -32,12 +32,13 @@ export function GoogleSignInButton({label, mode, farmCode, disabled, redirectTo 
 
     if (!result.success) {
       if (result.error !== "popup-closed") {
-        toast.error(result.error ?? "Gagal masuk dengan Google");
+        swalError("Gagal", result.error ?? "Gagal masuk dengan Google");
       }
       return;
     }
 
-    toast.success(
+    swalSuccess(
+      "Berhasil",
       mode === "register"
         ? "Akun Google berhasil dibuat."
         : "Berhasil masuk dengan Google."

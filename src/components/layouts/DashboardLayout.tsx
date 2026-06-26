@@ -15,7 +15,7 @@ import type { HealthAlert } from "@/lib/firebase-rtdb";
 import { fetchDataSensorFromRtdb, extractHealthAlerts } from "@/lib/firebase-rtdb";
 import { TCowLogo } from "@/components/ui/TCowLogo";
 import { RealtimeClock } from "@/components/ui/RealtimeClock";
-import { toast } from "sonner";
+import { swalSuccess } from "@/lib/swal";
 
 interface NavItem {
   href: string;
@@ -107,7 +107,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   const handleLogout = () => {
     logout();
-    toast.success("Berhasil keluar");
+    swalSuccess("Berhasil", "Berhasil keluar");
     router.push("/login");
   };
 

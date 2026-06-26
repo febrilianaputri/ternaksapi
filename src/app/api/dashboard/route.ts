@@ -78,8 +78,7 @@ export async function GET(request: NextRequest) {
           : s.sapiUpdate.toISOString(),
       };
     });
-    const weights = informasiFisikList.map((f) => f.berat_badan);
-    const avgWeight =
+    const weights = informasiFisikList.map((f: (typeof informasiFisikList)[number]) => f.berat_badan);    const avgWeight =
       weights.length > 0
         ? parseFloat((weights.reduce((a, b) => a + b, 0) / weights.length).toFixed(1))
         : null;

@@ -3,7 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 import { FaArrowLeft, FaHeartbeat, FaStethoscope, FaSpinner, FaBatteryQuarter, FaThermometerHalf, FaPlus, FaTrash, FaEdit } from "react-icons/fa";
-import { toast } from "sonner";
+import { swalSuccess, swalError } from "@/lib/swal";
 import Modal from "@/components/ui/Modal";
 import { formatKandangLabel } from "@/lib/sapi";
 import { cattleHealthColors, statusColors } from "@/lib/styles";
@@ -121,7 +121,6 @@ export default function CattleProfilePage() {
   useEffect(() => {
     fetchAllData();
 
-    // Auto-refresh setiap 30 detik
     const refreshInterval = setInterval(() => {
       if (!medicalModalMode && !activityModalMode && !deletingMedical && !deletingActivity) {
         fetchAllData();
@@ -154,7 +153,7 @@ export default function CattleProfilePage() {
 
   const handleSaveMedical = async () => {
     if (!medicalForm.date) {
-      toast.error("Tanggal wajib diisi");
+      swalError("Peringatan", "Tanggal wajib diisi");
       return;
     }
 
@@ -176,7 +175,7 @@ export default function CattleProfilePage() {
         if (!res.ok) throw new Error(json.error ?? "Gagal menambahkan riwayat medis");
         setMedicalRecords((prev) => [json.record!, ...prev]);
         await reloadDetail();
-        toast.success("Riwayat medis berhasil ditambahkan");
+        swalSuccess("Berhasil", "Riwayat medis berhasil ditambahkan");
       } else if (medicalModalMode === "edit" && editingMedical) {
         const res = await fetch(
           `/api/sapi/${encodeURIComponent(cattleId)}/medis/${encodeURIComponent(editingMedical.id)}`,
@@ -192,12 +191,12 @@ export default function CattleProfilePage() {
           prev.map((item) => (item.id === editingMedical.id ? json.record! : item))
         );
         await reloadDetail();
-        toast.success("Riwayat medis berhasil diperbarui");
+        swalSuccess("Berhasil", "Riwayat medis berhasil diperbarui");
       }
 
       closeMedicalModal();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Terjadi kesalahan");
+      swalError("Gagal", err instanceof Error ? err.message : "Terjadi kesalahan");
     } finally {
       setSaving(false);
     }
@@ -217,10 +216,10 @@ export default function CattleProfilePage() {
 
       setMedicalRecords((prev) => prev.filter((item) => item.id !== deletingMedical.id));
       await reloadDetail();
-      toast.success("Riwayat medis berhasil dihapus");
+      swalSuccess("Berhasil", "Riwayat medis berhasil dihapus");
       setDeletingMedical(null);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Terjadi kesalahan");
+      swalError("Gagal", err instanceof Error ? err.message : "Terjadi kesalahan");
     } finally {
       setSaving(false);
     }
@@ -271,7 +270,7 @@ export default function CattleProfilePage() {
 
   const handleSaveActivity = async () => {
     if (!activityForm.date) {
-      toast.error("Tanggal wajib diisi");
+      swalError("Peringatan", "Tanggal wajib diisi");
       return;
     }
 
@@ -279,7 +278,7 @@ export default function CattleProfilePage() {
       activityForm.kategori === "pencatatan_bobot" &&
       (!activityForm.beratBadan || Number(activityForm.beratBadan) <= 0)
     ) {
-      toast.error("Berat badan wajib diisi untuk pencatatan bobot");
+      swalError("Peringatan", "Berat badan wajib diisi untuk pencatatan bobot");
       return;
     }
 
@@ -296,7 +295,7 @@ export default function CattleProfilePage() {
         const json = (await res.json()) as { activity?: CattleActivity; error?: string };
         if (!res.ok) throw new Error(json.error ?? "Gagal menambahkan aktivitas");
         await reloadDetail();
-        toast.success("Aktivitas berhasil ditambahkan");
+        swalSuccess("Berhasil", "Aktivitas berhasil ditambahkan");
       } else if (activityModalMode === "edit" && editingActivity) {
         const res = await fetch(
           `/api/sapi/${encodeURIComponent(cattleId)}/aktivitas/${encodeURIComponent(editingActivity.id)}`,
@@ -309,12 +308,12 @@ export default function CattleProfilePage() {
         const json = (await res.json()) as { activity?: CattleActivity; error?: string };
         if (!res.ok) throw new Error(json.error ?? "Gagal memperbarui aktivitas");
         await reloadDetail();
-        toast.success("Aktivitas berhasil diperbarui");
+        swalSuccess("Berhasil", "Aktivitas berhasil diperbarui");
       }
 
       closeActivityModal();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Terjadi kesalahan");
+      swalError("Gagal", err instanceof Error ? err.message : "Terjadi kesalahan");
     } finally {
       setSaving(false);
     }
@@ -333,10 +332,10 @@ export default function CattleProfilePage() {
       if (!res.ok) throw new Error(json.error ?? "Gagal menghapus aktivitas");
 
       await reloadDetail();
-      toast.success("Aktivitas berhasil dihapus");
+      swalSuccess("Berhasil", "Aktivitas berhasil dihapus");
       setDeletingActivity(null);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Terjadi kesalahan");
+      swalError("Gagal", err instanceof Error ? err.message : "Terjadi kesalahan");
     } finally {
       setSaving(false);
     }

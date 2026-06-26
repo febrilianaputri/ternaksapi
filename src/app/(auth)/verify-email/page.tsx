@@ -4,7 +4,7 @@ import { useState, Suspense, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FaSpinner, FaRedo } from "react-icons/fa";
-import { toast } from "sonner";
+import { swalSuccess } from "@/lib/swal";
 import { glassBlock, lbl, inputClass, buttonClass } from "@/lib/styles";
 import { AuthErrorBanner } from "@/components/auth/AuthErrorBanner";
 import { apiFetch, apiPost } from "@/lib/api-client";
@@ -184,7 +184,7 @@ function VerifyEmailForm() {
       return;
     }
 
-    toast.success("Kode verifikasi baru telah dikirim ke email Anda.");
+    swalSuccess("Berhasil", "Kode verifikasi baru telah dikirim ke email Anda.");
     setResendCount(result.data.resendCount ?? 0);
     setRemainingResends(result.data.remainingResends ?? 0);
     setResendCooldown(result.data.resendCooldownSeconds ?? 60);
@@ -223,7 +223,7 @@ function VerifyEmailForm() {
       return;
     }
 
-    toast.success("Email berhasil diverifikasi. Silakan masuk.");
+    swalSuccess("Berhasil", "Email berhasil diverifikasi. Silakan masuk.");
     router.push("/login");
   };
 

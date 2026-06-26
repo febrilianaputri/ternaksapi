@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { FaUsers, FaPlus, FaEdit, FaTrash, FaSearch, FaDownload, FaSpinner, FaTimes, FaCheck, FaUserPlus } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext";
-import { toast } from "sonner";
+import { swalSuccess, swalError } from "@/lib/swal";
 
 type User = {
   uid: string;
@@ -61,7 +61,6 @@ export default function AdminPage() {
         setUsersData(json.usersData ?? []);
       }
     } catch {
-      // Silent fail
     } finally {
       setLoading(false);
     }
@@ -70,7 +69,6 @@ export default function AdminPage() {
   useEffect(() => {
     fetchUsers();
 
-    // Auto-refresh setiap 30 detik
     const refreshInterval = setInterval(() => {
       if (!showModal) {
         fetchUsers();
@@ -137,12 +135,12 @@ export default function AdminPage() {
         });
 
         if (res.ok) {
-          toast.success("Pengguna berhasil ditambahkan");
+          swalSuccess("Berhasil", "Pengguna berhasil ditambahkan");
           setShowModal(false);
           fetchUsers();
         } else {
           const data = await res.json();
-          toast.error(data.error || "Gagal menambahkan pengguna");
+          swalError("Gagal", data.error || "Gagal menambahkan pengguna");
         }
       } else {
         const res = await fetch("/api/pengguna", {
@@ -159,16 +157,16 @@ export default function AdminPage() {
         });
 
         if (res.ok) {
-          toast.success("Pengguna berhasil diperbarui");
+          swalSuccess("Berhasil", "Pengguna berhasil diperbarui");
           setShowModal(false);
           fetchUsers();
         } else {
           const data = await res.json();
-          toast.error(data.error || "Gagal memperbarui pengguna");
+          swalError("Gagal", data.error || "Gagal memperbarui pengguna");
         }
       }
     } catch (error) {
-      toast.error("Terjadi kesalahan");
+      swalError("Gagal", "Terjadi kesalahan");
     } finally {
       setSubmitting(false);
     }
@@ -185,15 +183,15 @@ export default function AdminPage() {
       });
 
       if (res.ok) {
-        toast.success("Pengguna berhasil dihapus");
+        swalSuccess("Berhasil", "Pengguna berhasil dihapus");
         setDeleteId(null);
         fetchUsers();
       } else {
         const data = await res.json();
-        toast.error(data.error || "Gagal menghapus pengguna");
+        swalError("Gagal", data.error || "Gagal menghapus pengguna");
       }
     } catch (error) {
-      toast.error("Terjadi kesalahan");
+      swalError("Gagal", "Terjadi kesalahan");
     } finally {
       setSubmitting(false);
     }
@@ -220,7 +218,7 @@ export default function AdminPage() {
     link.href = URL.createObjectURL(blob);
     link.download = `data_pengguna_${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
-    toast.success("Data berhasil diekspor");
+    swalSuccess("Berhasil", "Data berhasil diekspor");
   };
 
   const formatDate = (dateStr: string) => {

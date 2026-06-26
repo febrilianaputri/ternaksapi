@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { FaSpinner, FaExclamationTriangle, FaPlus, FaDownload, FaTrash, FaEye } from "react-icons/fa";
-import { toast } from "sonner";
+import { swalSuccess, swalError } from "@/lib/swal";
 import Modal from "@/components/ui/Modal";
 import type { CattleInput, CattleListItem } from "@/lib/sapi";
 import { formatKandangLabel } from "@/lib/sapi";
@@ -90,7 +90,6 @@ export default function CattleListPage() {
       }
     })();
 
-    // Auto-refresh setiap 30 detik
     const refreshInterval = setInterval(() => {
       if (!modalMode) {
         fetchCattle();
@@ -136,7 +135,7 @@ export default function CattleListPage() {
 
   const handleSave = async () => {
     if (!form.name.trim() || !form.breed.trim()) {
-      toast.error("Nama dan jenis sapi wajib diisi");
+      swalError("Peringatan", "Nama dan jenis sapi wajib diisi");
       return;
     }
 
@@ -154,7 +153,7 @@ export default function CattleListPage() {
         const json = (await res.json()) as { cattle?: CattleListItem; error?: string };
         if (!res.ok) throw new Error(json.error ?? "Gagal menambahkan sapi");
         setCattle((prev) => [...prev, json.cattle!].sort((a, b) => a.idsapi - b.idsapi));
-        toast.success("Sapi berhasil ditambahkan");
+        swalSuccess("Berhasil", "Sapi berhasil ditambahkan");
       } else if (modalMode === "edit" && editingCattle) {
         const res = await fetch(`/api/sapi/${encodeURIComponent(editingCattle.id)}`, {
           method: "PATCH",
@@ -166,12 +165,12 @@ export default function CattleListPage() {
         setCattle((prev) =>
           prev.map((item) => (item.id === editingCattle.id ? json.cattle! : item))
         );
-        toast.success("Data sapi berhasil diperbarui");
+        swalSuccess("Berhasil", "Data sapi berhasil diperbarui");
       }
 
       closeFormModal();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Terjadi kesalahan");
+      swalError("Gagal", err instanceof Error ? err.message : "Terjadi kesalahan");
     } finally {
       setSaving(false);
     }
@@ -189,10 +188,10 @@ export default function CattleListPage() {
       if (!res.ok) throw new Error(json.error ?? "Gagal menghapus sapi");
 
       setCattle((prev) => prev.filter((item) => item.id !== deletingCattle.id));
-      toast.success("Sapi berhasil dihapus");
+      swalSuccess("Berhasil", "Sapi berhasil dihapus");
       setDeletingCattle(null);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Terjadi kesalahan");
+      swalError("Gagal", err instanceof Error ? err.message : "Terjadi kesalahan");
     } finally {
       setSaving(false);
     }
@@ -200,7 +199,7 @@ export default function CattleListPage() {
 
   const handleExport = () => {
     if (!cattle.length) {
-      toast.error("Tidak ada data sapi untuk diekspor");
+      swalError("Gagal", "Tidak ada data sapi untuk diekspor");
       return;
     }
 
@@ -223,7 +222,7 @@ export default function CattleListPage() {
     link.href = URL.createObjectURL(blob);
     link.download = `sapi_export_${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
-    toast.success("Export data sapi berhasil");
+    swalSuccess("Berhasil", "Export data sapi berhasil");
   };
 
   if (loading) {

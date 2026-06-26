@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { FaWrench, FaPlus, FaClock, FaCheckCircle, FaExclamationTriangle, FaUser, FaDownload, FaSpinner } from "react-icons/fa";
-import { toast } from "sonner";
+import { swalSuccess } from "@/lib/swal";
 import Modal from "@/components/ui/Modal";
 import { useAuth } from "@/context/AuthContext";
 
@@ -59,7 +59,6 @@ export default function MaintenancePage() {
   useEffect(() => {
     fetchMaintenance();
 
-    // Auto-refresh setiap 30 detik
     const refreshInterval = setInterval(() => {
       if (!showAddModal) {
         fetchMaintenance();
@@ -88,7 +87,7 @@ export default function MaintenancePage() {
   const doneCount = maintenanceData.filter((m) => m.status === "Selesai").length;
   const handleAddMaintenance = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Perawatan berhasil ditambahkan");
+    swalSuccess("Berhasil", "Perawatan berhasil ditambahkan");
     setShowAddModal(false);
     setFormData({
       id: "",
@@ -114,7 +113,7 @@ export default function MaintenancePage() {
     link.href = URL.createObjectURL(blob);
     link.download = `data_perawatan_${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
-    toast.success("Data perawatan berhasil diekspor");
+    swalSuccess("Berhasil", "Data perawatan berhasil diekspor");
   };
 
   if (loading) {

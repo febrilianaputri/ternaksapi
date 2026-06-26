@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { FaExclamationTriangle } from "react-icons/fa";
 import { FaX } from "react-icons/fa6";
-import { toast } from "sonner";
+import { swalSuccess, swalError, swalWarning } from "@/lib/swal";
 import type { CattleListItem } from "@/lib/sapi";
 import { Html5Qrcode } from "html5-qrcode";
 import "@/app/globals.css";
@@ -97,7 +97,7 @@ export function ScanOverlay({ isOpen, onClose }: ScanOverlayProps) {
       }
       if (err.name === "NotAllowedError") {
         setStatus("Izin ditolak");
-        toast.error("Izinkan akses kamera terlebih dahulu");
+        swalWarning("Izin Ditolak", "Izinkan akses kamera terlebih dahulu");
       } else if (err.name === "NotFoundError") {
         setStatus("Kamera tidak ditemukan");
       } else {
@@ -167,22 +167,22 @@ export function ScanOverlay({ isOpen, onClose }: ScanOverlayProps) {
     try {
       const res = await fetch(`/api/sapi/${encodeURIComponent(code)}`);
       if (!res.ok) {
-        toast.error("Sapi tidak ditemukan");
+        swalError("Tidak Ditemukan", "Sapi tidak ditemukan");
         setStatus("Sapi tidak ditemukan");
         return;
       }
       const json = await res.json();
       if (!json.cattle) {
-        toast.error("Sapi tidak ditemukan");
+        swalError("Tidak Ditemukan", "Sapi tidak ditemukan");
         setStatus("Sapi tidak ditemukan");
         return;
       }
 
       setCattle(json.cattle);
       setStatus(`Sapi ditemukan: ${json.cattle.name}`);
-      toast.success(`Sapi ${json.cattle.name} berhasil ditemukan!`);
+      swalSuccess("Berhasil", `Sapi ${json.cattle.name} berhasil ditemukan!`);
     } catch {
-      toast.error("Gagal mengambil data sapi");
+      swalError("Gagal", "Gagal mengambil data sapi");
       setStatus("Gagal mengambil data");
     }
   };

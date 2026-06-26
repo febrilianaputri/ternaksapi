@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { toast } from "sonner";
+import { swalSuccess, swalError } from "@/lib/swal";
 import PageRegister1 from "@/components/ui/PageRegister1";
 import PageRegister2 from "@/components/ui/PageRegister2";
 
@@ -20,13 +20,13 @@ export default function RegisterPage() {
     setLoading(false);
 
     if (!result.valid) {
-      toast.error(result.error ?? "No kode tidak valid");
+      swalError("Gagal", result.error ?? "No kode tidak valid");
       return;
     }
 
     setFarmCode(code.trim().toUpperCase());
     setStep(2);
-    toast.success("No kode berhasil diverifikasi");
+    swalSuccess("Berhasil", "No kode berhasil diverifikasi");
   };
 
   const handleRegistration = async (data: {
@@ -45,14 +45,14 @@ export default function RegisterPage() {
     setLoading(false);
 
     if (result.success && result.needsVerification && result.email) {
-      toast.success("Kode verifikasi dikirim ke email Anda.");
+      swalSuccess("Berhasil", "Kode verifikasi dikirim ke email Anda.");
       router.push(
         `/verify-email?email=${encodeURIComponent(result.email)}`
       );
     } else if (result.success) {
       router.push("/login");
     } else {
-      toast.error(result.error ?? "Gagal mendaftarkan akun");
+      swalError("Gagal", result.error ?? "Gagal mendaftarkan akun");
     }
   };
 
